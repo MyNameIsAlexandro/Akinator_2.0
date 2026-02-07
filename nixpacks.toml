@@ -1,8 +1,5 @@
 [phases.install]
 cmds = ["pip install -r requirements.txt"]
 
-[variables]
-PYTHONPATH = "/app/src"
-
 [start]
-cmd = "PYTHONPATH=/app/src python -m akinator.seed && PYTHONPATH=/app/src python -m akinator"
+cmd = "python -m akinator.seed && python -m akinator"
