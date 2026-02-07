@@ -15,6 +15,8 @@ from akinator.engine.scoring import ScoringEngine
 from akinator.engine.session import GameSessionManager
 from akinator.engine.question_policy import QuestionPolicy
 
+from akinator.db.repository import Repository
+
 logger = logging.getLogger(__name__)
 
 router = Router()
@@ -27,6 +29,7 @@ _entity_names: dict[int, str] = {}
 _scoring_engine = ScoringEngine()
 _question_policy = QuestionPolicy()
 _session_manager = GameSessionManager(_scoring_engine, _question_policy)
+_repo: Repository | None = None
 
 
 def get_session_store() -> dict[int, GameSession]:
@@ -45,6 +48,12 @@ def get_entity_names(ids: list[int] | None = None) -> dict[int, str]:
     if ids is None:
         return _entity_names
     return {eid: _entity_names[eid] for eid in ids if eid in _entity_names}
+
+
+def set_repository(repo: Repository) -> None:
+    """Called at startup to set the database repository for runtime learning."""
+    global _repo
+    _repo = repo
 
 
 def set_game_data(entities: list[Entity], attributes: list[Attribute]) -> None:
@@ -356,12 +365,20 @@ async def handle_text(message: Message) -> None:
         await _ask_next_question(message, session)
 
     elif session.mode == GameMode.LEARNING:
-        # User tells who it was — just acknowledge for MVP
+        # Save new entity to database from user answers
+        entity_name = message.text.strip()
+        saved = await _learn_new_entity(entity_name, session, lang)
         _session_manager.finish_learning(session)
-        if lang == "ru":
-            text = f"Спасибо! Я запомню **{message.text}** на будущее."
+        if saved:
+            if lang == "ru":
+                text = f"Спасибо! Я запомнил **{entity_name}** и буду угадывать в следующий раз."
+            else:
+                text = f"Thanks! I learned **{entity_name}** and will guess it next time."
         else:
-            text = f"Thanks! I'll remember **{message.text}** for next time."
+            if lang == "ru":
+                text = f"Спасибо! Я запомню **{entity_name}** на будущее."
+            else:
+                text = f"Thanks! I'll remember **{entity_name}** for next time."
         await message.answer(text, reply_markup=new_game_keyboard(lang))
 
     else:
@@ -408,3 +425,59 @@ async def _ask_next_question(message: Message, session: GameSession) -> None:
         header = f"Question {q_num}/20:"
 
     await message.answer(f"{header}\n{q_text}", reply_markup=answer_keyboard(lang))
+
+
+async def _learn_new_entity(
+    name: str, session: GameSession, lang: str,
+) -> bool:
+    """Save a new entity to DB and add to in-memory lists.
+
+    Infer attribute values from the session's QA history.
+    Returns True if saved successfully.
+    """
+    if _repo is None:
+        return False
+
+    try:
+        # Build attributes from QA history
+        attrs: dict[str, float] = {}
+        answer_to_value = {
+            Answer.YES: 1.0,
+            Answer.NO: 0.0,
+            Answer.PROBABLY_YES: 0.75,
+            Answer.PROBABLY_NO: 0.25,
+            Answer.DONT_KNOW: 0.5,
+        }
+        for qa in session.history:
+            attrs[qa.attribute_key] = answer_to_value[qa.answer]
+
+        # Save to DB
+        eid = await _repo.add_entity(
+            name=name,
+            description=f"Learned from user {session.user_id}",
+            entity_type="character",
+            language=lang,
+        )
+
+        # Save attributes
+        attr_key_to_id = {a.key: a.id for a in _attributes}
+        for key, value in attrs.items():
+            if key in attr_key_to_id:
+                await _repo.set_entity_attribute(eid, attr_key_to_id[key], value)
+
+        # Add to in-memory lists so it's available immediately
+        new_entity = Entity(
+            id=eid, name=name,
+            description=f"Learned from user {session.user_id}",
+            entity_type="character", language=lang,
+            attributes=attrs,
+        )
+        _entities.append(new_entity)
+        _entity_names[eid] = name
+
+        logger.info("Learned new entity: %s (id=%d) with %d attributes", name, eid, len(attrs))
+        return True
+
+    except Exception:
+        logger.exception("Failed to save new entity: %s", name)
+        return False

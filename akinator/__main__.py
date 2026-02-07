@@ -9,7 +9,7 @@ import sys
 
 from aiogram import Bot, Dispatcher
 
-from akinator.bot.handlers import router, set_game_data
+from akinator.bot.handlers import router, set_game_data, set_repository
 from akinator.db.repository import Repository
 
 logging.basicConfig(
@@ -57,7 +57,8 @@ async def main() -> None:
     else:
         await load_game_data(repo)
 
-    await repo.close()
+    # Keep repo open for runtime learning
+    set_repository(repo)
 
     # Start bot
     bot = Bot(token=token)
