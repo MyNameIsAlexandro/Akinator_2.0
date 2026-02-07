@@ -39,9 +39,9 @@ async def load_game_data(repo: Repository) -> None:
 
 
 async def main() -> None:
-    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    token = os.environ.get("BOT_TOKEN") or os.environ.get("TELEGRAM_BOT_TOKEN")
     if not token:
-        logger.error("TELEGRAM_BOT_TOKEN environment variable is required")
+        logger.error("BOT_TOKEN environment variable is required")
         sys.exit(1)
 
     # Init database and load data
