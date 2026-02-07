@@ -169,7 +169,7 @@ class TestModeTransitions:
         session = GameSession(
             session_id="test", user_id=1,
             candidate_ids=[1, 2, 3],
-            weights=[0.50, SECOND_GUESS_THRESHOLD + 0.01, 0.01],
+            weights=[0.28, SECOND_GUESS_THRESHOLD + 0.01, SECOND_GUESS_THRESHOLD + 0.01],
             mode=GameMode.GUESSING,
             guess_count=0,
         )
