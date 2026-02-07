@@ -26,13 +26,11 @@ async def load_game_data(repo: Repository) -> None:
     entities = await repo.get_all_entities()
     attributes = await repo.get_all_attributes()
 
-    # Load attributes for each entity
-    attr_map = {a.id: a for a in attributes}
+    # Batch-load all entity attributes in one query
+    all_attrs = await repo.get_all_entity_attributes()
     for entity in entities:
-        for attr in attributes:
-            val = await repo.get_entity_attribute(entity.id, attr.id)
-            if val is not None:
-                entity.attributes[attr.key] = val
+        if entity.id in all_attrs:
+            entity.attributes = all_attrs[entity.id]
 
     set_game_data(entities, attributes)
     logger.info("Loaded %d entities, %d attributes", len(entities), len(attributes))

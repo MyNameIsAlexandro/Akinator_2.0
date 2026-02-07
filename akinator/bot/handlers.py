@@ -433,6 +433,7 @@ async def _learn_new_entity(
     """Save a new entity to DB and add to in-memory lists.
 
     Infer attribute values from the session's QA history.
+    If an entity with the same name already exists, update its attributes.
     Returns True if saved successfully.
     """
     if _repo is None:
@@ -451,7 +452,24 @@ async def _learn_new_entity(
         for qa in session.history:
             attrs[qa.attribute_key] = answer_to_value[qa.answer]
 
-        # Save to DB
+        attr_key_to_id = {a.key: a.id for a in _attributes}
+
+        # Check if entity already exists (duplicate detection)
+        existing = await _repo.find_entity_by_name(name)
+        if existing is not None:
+            # Update existing entity's attributes with new answers
+            for key, value in attrs.items():
+                if key in attr_key_to_id:
+                    await _repo.set_entity_attribute(existing.id, attr_key_to_id[key], value)
+            # Update in-memory entity
+            for e in _entities:
+                if e.id == existing.id:
+                    e.attributes.update(attrs)
+                    break
+            logger.info("Updated existing entity: %s (id=%d) with %d attributes", name, existing.id, len(attrs))
+            return True
+
+        # Save new entity to DB
         eid = await _repo.add_entity(
             name=name,
             description=f"Learned from user {session.user_id}",
@@ -460,12 +478,11 @@ async def _learn_new_entity(
         )
 
         # Save attributes
-        attr_key_to_id = {a.key: a.id for a in _attributes}
         for key, value in attrs.items():
             if key in attr_key_to_id:
                 await _repo.set_entity_attribute(eid, attr_key_to_id[key], value)
 
-        # Add to in-memory lists so it's available immediately
+        # Add to in-memory lists so it's available immediately for all users
         new_entity = Entity(
             id=eid, name=name,
             description=f"Learned from user {session.user_id}",

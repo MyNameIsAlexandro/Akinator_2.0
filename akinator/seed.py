@@ -752,6 +752,616 @@ ENTITIES = [
      {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
       "is_villain": 0.2, "from_usa": 1.0, "from_science": 0.5, "era_21st_century": 1.0,
       "is_leader": 0.9, "is_wealthy": 1.0}),
+
+    # ──────────────── Disney / Pixar / Animation ────────────────
+
+    ("Simba", "Lion prince from Disney's The Lion King", "character", "en",
+     ["Симба", "Lion King"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.0, "is_alive": 1.0, "is_adult": 0.7,
+      "is_villain": 0.0, "from_movie": 1.0, "from_book": 0.3, "from_usa": 1.0,
+      "is_leader": 1.0, "era_20th_century": 1.0}),
+
+    ("Buzz Lightyear", "Space ranger toy from Pixar's Toy Story", "character", "en",
+     ["Базз Лайтер", "Buzz"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.0, "is_alive": 0.5, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_usa": 1.0, "wears_uniform": 1.0,
+      "has_famous_catchphrase": 1.0, "era_20th_century": 1.0}),
+
+    ("Woody", "Cowboy toy sheriff from Pixar's Toy Story", "character", "en",
+     ["Вуди", "Sheriff Woody"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.0, "is_alive": 0.5, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_usa": 1.0, "wears_uniform": 0.7,
+      "has_famous_catchphrase": 1.0, "is_leader": 0.8, "era_20th_century": 1.0}),
+
+    ("Rapunzel", "Disney princess with magical long golden hair", "character", "en",
+     ["Рапунцель"],
+     {"is_fictional": 1.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 0.7,
+      "is_villain": 0.0, "from_movie": 1.0, "from_book": 0.8, "from_europe": 1.0,
+      "has_superpower": 0.8, "is_wealthy": 0.8}),
+
+    ("Maui", "Demigod from Disney's Moana", "character", "en",
+     ["Мауи"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.5, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "has_superpower": 1.0,
+      "has_famous_catchphrase": 1.0, "from_asia": 0.3}),
+
+    ("Maleficent", "Evil fairy from Disney's Sleeping Beauty", "character", "en",
+     ["Малефисента"],
+     {"is_fictional": 1.0, "is_male": 0.0, "is_human": 0.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 1.0, "from_movie": 1.0, "from_europe": 0.7,
+      "has_superpower": 1.0, "era_medieval": 0.7}),
+
+    ("Aladdin", "Street thief who finds a magic lamp, Disney character", "character", "en",
+     ["Аладдин"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 0.8,
+      "is_villain": 0.0, "from_movie": 1.0, "from_book": 1.0, "from_asia": 1.0,
+      "is_wealthy": 0.5, "era_medieval": 0.8}),
+
+    ("Genie", "Magical genie from Disney's Aladdin", "character", "en",
+     ["Джинн"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "has_superpower": 1.0,
+      "has_famous_catchphrase": 1.0, "from_asia": 1.0}),
+
+    ("Nemo", "Clownfish from Pixar's Finding Nemo", "character", "en",
+     ["Немо"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.0, "is_alive": 1.0, "is_adult": 0.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_usa": 1.0, "era_21st_century": 1.0}),
+
+    ("Shrek's Donkey", "Talking donkey, Shrek's best friend", "character", "en",
+     ["Ослик", "Donkey"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "has_famous_catchphrase": 0.7,
+      "from_usa": 1.0}),
+
+    # ──────────────── Classic literature / horror ────────────────
+
+    ("Dracula", "Vampire count from Bram Stoker's novel", "character", "en",
+     ["Дракула", "Count Dracula"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.5, "is_alive": 0.5, "is_adult": 1.0,
+      "is_villain": 1.0, "from_movie": 1.0, "from_book": 1.0, "from_europe": 1.0,
+      "has_superpower": 1.0, "is_wealthy": 1.0, "era_modern": 1.0}),
+
+    ("Frankenstein's Monster", "Creature created by Victor Frankenstein", "character", "en",
+     ["Франкенштейн", "Frankenstein"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.3, "is_alive": 0.7, "is_adult": 1.0,
+      "is_villain": 0.5, "from_movie": 1.0, "from_book": 1.0, "from_europe": 1.0,
+      "has_superpower": 0.5, "era_modern": 1.0}),
+
+    ("Robin Hood", "Legendary English outlaw who robs from the rich", "character", "en",
+     ["Робин Гуд"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.3, "from_movie": 1.0, "from_book": 1.0, "from_europe": 1.0,
+      "is_leader": 0.8, "era_medieval": 1.0, "from_history": 0.5}),
+
+    ("Romeo", "Tragic young lover from Shakespeare's Romeo and Juliet", "character", "en",
+     ["Ромео"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 0.7,
+      "is_villain": 0.0, "from_book": 1.0, "from_movie": 0.8, "from_europe": 1.0,
+      "era_modern": 1.0}),
+
+    ("D'Artagnan", "Young Gascon swordsman from The Three Musketeers", "character", "en",
+     ["Д'Артаньян", "ДАртаньян"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 0.8,
+      "is_villain": 0.0, "from_book": 1.0, "from_movie": 1.0, "from_europe": 1.0,
+      "wears_uniform": 0.8, "era_modern": 1.0}),
+
+    ("Zorro", "Masked vigilante swordsman in colonial California", "character", "en",
+     ["Зорро"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_book": 1.0, "from_usa": 0.5,
+      "wears_uniform": 1.0, "is_wealthy": 1.0, "era_modern": 1.0}),
+
+    # ──────────────── More anime ────────────────
+
+    ("Vegeta", "Saiyan prince from Dragon Ball", "character", "en",
+     ["Вегета"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.5, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.4, "from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0,
+      "has_superpower": 1.0, "wears_uniform": 0.7, "is_leader": 0.7, "is_wealthy": 0.8}),
+
+    ("Sakura Haruno", "Kunoichi and medic from Naruto", "character", "en",
+     ["Сакура Харуно", "Sakura"],
+     {"is_fictional": 1.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 0.7,
+      "is_villain": 0.0, "from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0,
+      "has_superpower": 0.8, "wears_uniform": 0.5}),
+
+    ("Mikasa Ackerman", "Elite soldier from Attack on Titan", "character", "en",
+     ["Микаса Аккерман", "Mikasa"],
+     {"is_fictional": 1.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 0.8,
+      "is_villain": 0.0, "from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0,
+      "wears_uniform": 1.0, "has_superpower": 0.5}),
+
+    ("Sailor Moon", "Magical schoolgirl warrior who fights evil", "character", "en",
+     ["Сейлор Мун", "Усаги Цукино", "Usagi"],
+     {"is_fictional": 1.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 0.4,
+      "is_villain": 0.0, "from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0,
+      "has_superpower": 1.0, "wears_uniform": 1.0, "is_leader": 0.8}),
+
+    ("Lelouch Lamperouge", "Exiled prince with mind control power from Code Geass", "character", "en",
+     ["Лелуш", "Lelouch vi Britannia"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.5, "is_adult": 0.7,
+      "is_villain": 0.5, "from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0,
+      "has_superpower": 1.0, "is_leader": 1.0, "is_wealthy": 0.8, "wears_uniform": 0.8}),
+
+    ("Edward Elric", "Young alchemist from Fullmetal Alchemist", "character", "en",
+     ["Эдвард Элрик", "Ed Elric"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 0.5,
+      "is_villain": 0.0, "from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0,
+      "has_superpower": 0.8, "from_science": 0.6}),
+
+    ("Тоторо", "Добрый лесной дух из мультфильма Хаяо Миядзаки", "character", "ru",
+     ["Totoro", "My Neighbor Totoro"],
+     {"is_fictional": 1.0, "is_male": 0.5, "is_human": 0.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_anime": 1.0, "from_movie": 1.0, "from_japan": 1.0,
+      "from_asia": 1.0, "has_superpower": 0.8}),
+
+    # ──────────────── More video games ────────────────
+
+    ("Cloud Strife", "Spiky-haired swordsman from Final Fantasy VII", "character", "en",
+     ["Клауд Страйф", "Cloud"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_game": 1.0, "from_japan": 1.0,
+      "wears_uniform": 0.5, "has_superpower": 0.5}),
+
+    ("Pac-Man", "Yellow circle-shaped character who eats pellets in a maze", "character", "en",
+     ["Пакман"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.0, "is_alive": 1.0, "is_adult": 0.5,
+      "is_villain": 0.0, "from_game": 1.0, "from_japan": 1.0, "from_asia": 1.0,
+      "era_20th_century": 1.0}),
+
+    ("Princess Zelda", "Princess of Hyrule from The Legend of Zelda", "character", "en",
+     ["Зельда", "Zelda"],
+     {"is_fictional": 1.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 0.8,
+      "is_villain": 0.0, "from_game": 1.0, "from_japan": 1.0,
+      "has_superpower": 0.8, "is_wealthy": 1.0, "is_leader": 0.9}),
+
+    ("Minecraft Steve", "Default player character from Minecraft", "character", "en",
+     ["Стив", "Steve Minecraft"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_game": 1.0, "era_21st_century": 1.0}),
+
+    ("Among Us Crewmate", "Spaceship crewmate from the game Among Us", "character", "en",
+     ["Амонг Ас", "Crewmate", "Impostor"],
+     {"is_fictional": 1.0, "is_male": 0.5, "is_human": 0.5, "is_alive": 1.0, "is_adult": 0.5,
+      "is_villain": 0.5, "from_game": 1.0, "wears_uniform": 1.0, "era_21st_century": 1.0}),
+
+    ("GTA Trevor", "Unhinged criminal from Grand Theft Auto V", "character", "en",
+     ["Тревор Филлипс", "Trevor Philips"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.8, "from_game": 1.0, "from_usa": 1.0, "era_21st_century": 1.0}),
+
+    # ──────────────── TV series ────────────────
+
+    ("Sheldon Cooper", "Genius physicist from The Big Bang Theory", "character", "en",
+     ["Шелдон Купер", "Sheldon"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_tv_series": 1.0, "from_usa": 1.0, "from_science": 0.9,
+      "has_famous_catchphrase": 1.0, "era_21st_century": 1.0}),
+
+    ("Daenerys Targaryen", "Dragon queen from Game of Thrones", "character", "en",
+     ["Дейенерис Таргариен", "Daenerys", "Khaleesi"],
+     {"is_fictional": 1.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 0.8,
+      "is_villain": 0.5, "from_tv_series": 1.0, "from_book": 1.0, "from_europe": 0.5,
+      "has_superpower": 0.7, "is_leader": 1.0, "is_wealthy": 1.0, "era_medieval": 0.8}),
+
+    ("Jon Snow", "Bastard of Winterfell from Game of Thrones", "character", "en",
+     ["Джон Сноу"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 0.8,
+      "is_villain": 0.0, "from_tv_series": 1.0, "from_book": 1.0, "from_europe": 0.5,
+      "wears_uniform": 0.7, "is_leader": 0.9, "era_medieval": 0.8}),
+
+    ("Rick Sanchez", "Genius scientist from Rick and Morty", "character", "en",
+     ["Рик Санчез", "Rick"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.4, "from_tv_series": 1.0, "from_usa": 1.0, "from_science": 1.0,
+      "has_superpower": 0.7, "has_famous_catchphrase": 1.0}),
+
+    ("Dexter Morgan", "Blood spatter analyst who is a serial killer", "character", "en",
+     ["Декстер Морган", "Dexter"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.7, "from_tv_series": 1.0, "from_usa": 1.0, "from_science": 0.5,
+      "era_21st_century": 1.0}),
+
+    ("Eleven", "Girl with telekinetic powers from Stranger Things", "character", "en",
+     ["Одиннадцать", "011"],
+     {"is_fictional": 1.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 0.3,
+      "is_villain": 0.0, "from_tv_series": 1.0, "from_usa": 1.0,
+      "has_superpower": 1.0, "era_20th_century": 0.8}),
+
+    ("Tommy Shelby", "Gangster leader from Peaky Blinders", "character", "en",
+     ["Томми Шелби"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.6, "from_tv_series": 1.0, "from_europe": 1.0,
+      "is_leader": 1.0, "is_wealthy": 1.0, "wears_uniform": 0.7, "era_20th_century": 1.0}),
+
+    # ──────────────── More real people ────────────────
+
+    ("Bill Gates", "Co-founder of Microsoft", "person", "en",
+     ["Билл Гейтс"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.1, "from_usa": 1.0, "from_science": 0.7, "era_21st_century": 1.0,
+      "is_leader": 0.9, "is_wealthy": 1.0}),
+
+    ("Jeff Bezos", "Founder of Amazon, one of the richest people", "person", "en",
+     ["Джефф Безос"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.2, "from_usa": 1.0, "era_21st_century": 1.0,
+      "is_leader": 0.9, "is_wealthy": 1.0}),
+
+    ("Marilyn Monroe", "Iconic American actress and model of the 1950s", "person", "en",
+     ["Мэрилин Монро"],
+     {"is_fictional": 0.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_usa": 1.0, "from_music": 0.3,
+      "era_20th_century": 1.0, "is_wealthy": 0.8, "has_famous_catchphrase": 0.7}),
+
+    ("Audrey Hepburn", "Elegant British-Belgian actress, Breakfast at Tiffany's", "person", "en",
+     ["Одри Хепбёрн"],
+     {"is_fictional": 0.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_europe": 1.0,
+      "era_20th_century": 1.0, "is_wealthy": 0.7}),
+
+    ("Keanu Reeves", "Canadian actor, known for The Matrix and John Wick", "person", "en",
+     ["Киану Ривз"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_usa": 0.8,
+      "era_21st_century": 1.0}),
+
+    ("Morgan Freeman", "American actor known for his distinctive voice", "person", "en",
+     ["Морган Фриман"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_usa": 1.0,
+      "era_21st_century": 1.0}),
+
+    ("Johnny Depp", "American actor, known for Captain Jack Sparrow", "person", "en",
+     ["Джонни Депп"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_usa": 1.0,
+      "era_21st_century": 1.0, "is_wealthy": 0.8}),
+
+    ("Angelina Jolie", "American actress and filmmaker, humanitarian", "person", "en",
+     ["Анджелина Джоли"],
+     {"is_fictional": 0.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_usa": 1.0,
+      "era_21st_century": 1.0, "is_wealthy": 0.8}),
+
+    ("Дмитрий Нагиев", "Российский актёр и телеведущий", "person", "ru",
+     ["Nagiev"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_tv_series": 0.8, "from_movie": 0.7, "from_russia": 1.0,
+      "era_21st_century": 1.0}),
+
+    ("Алла Пугачёва", "Российская эстрадная певица, примадонна", "person", "ru",
+     ["Pugacheva", "Примадонна"],
+     {"is_fictional": 0.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_music": 1.0, "from_russia": 1.0,
+      "era_20th_century": 0.8, "era_21st_century": 0.7, "is_wealthy": 0.8}),
+
+    ("Виктор Цой", "Советский рок-музыкант, лидер группы Кино", "person", "ru",
+     ["Tsoi", "Цой"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_music": 1.0, "from_russia": 1.0, "from_asia": 0.3,
+      "era_20th_century": 1.0, "has_famous_catchphrase": 0.7, "is_leader": 0.5}),
+
+    ("Хабиб Нурмагомедов", "Российский боец ММА, непобеждённый чемпион UFC", "person", "ru",
+     ["Khabib", "Khabib Nurmagomedov"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_sport": 1.0, "from_russia": 1.0,
+      "era_21st_century": 1.0, "is_leader": 0.5}),
+
+    ("Neymar", "Brazilian football star", "person", "en",
+     ["Неймар"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.1, "from_sport": 1.0, "era_21st_century": 1.0,
+      "is_wealthy": 1.0}),
+
+    ("Serena Williams", "American tennis champion, one of the greatest ever", "person", "en",
+     ["Серена Уильямс"],
+     {"is_fictional": 0.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_sport": 1.0, "from_usa": 1.0,
+      "era_21st_century": 1.0, "is_wealthy": 0.9}),
+
+    ("Conor McGregor", "Irish MMA fighter, former UFC champion", "person", "en",
+     ["Конор Макгрегор"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.3, "from_sport": 1.0, "from_europe": 1.0,
+      "era_21st_century": 1.0, "is_wealthy": 0.9, "has_famous_catchphrase": 0.8}),
+
+    ("Александр Великий", "Македонский царь-завоеватель", "person", "ru",
+     ["Alexander the Great", "Александр Македонский"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.3, "from_history": 1.0, "from_europe": 1.0,
+      "era_ancient": 1.0, "is_leader": 1.0, "is_wealthy": 1.0}),
+
+    ("Спартак", "Фракийский гладиатор, предводитель восстания рабов", "person", "ru",
+     ["Spartacus"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.3, "from_history": 1.0, "from_europe": 1.0, "from_movie": 0.7,
+      "era_ancient": 1.0, "is_leader": 1.0, "wears_uniform": 0.7}),
+
+    ("Маргарет Тэтчер", "Премьер-министр Великобритании, железная леди", "person", "ru",
+     ["Margaret Thatcher", "Iron Lady"],
+     {"is_fictional": 0.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.3, "from_politics": 1.0, "from_europe": 1.0,
+      "era_20th_century": 1.0, "is_leader": 1.0, "has_famous_catchphrase": 0.7}),
+
+    ("Winston Churchill", "British Prime Minister during World War II", "person", "en",
+     ["Уинстон Черчилль", "Черчилль"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_politics": 1.0, "from_europe": 1.0, "from_history": 1.0,
+      "era_20th_century": 1.0, "is_leader": 1.0, "has_famous_catchphrase": 1.0}),
+
+    ("Martin Luther King", "American civil rights leader", "person", "en",
+     ["Мартин Лютер Кинг", "MLK"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_politics": 1.0, "from_usa": 1.0, "from_history": 1.0,
+      "era_20th_century": 1.0, "is_leader": 1.0, "has_famous_catchphrase": 1.0}),
+
+    ("Махатма Ганди", "Индийский лидер, борец за независимость", "person", "ru",
+     ["Mahatma Gandhi", "Gandhi"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_politics": 1.0, "from_asia": 1.0, "from_history": 1.0,
+      "era_20th_century": 1.0, "is_leader": 1.0, "has_famous_catchphrase": 0.8}),
+
+    ("John Lennon", "Beatles musician and peace activist", "person", "en",
+     ["Джон Леннон"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_music": 1.0, "from_europe": 1.0,
+      "era_20th_century": 1.0, "has_famous_catchphrase": 0.8}),
+
+    ("Bob Marley", "Jamaican reggae legend", "person", "en",
+     ["Боб Марли"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_music": 1.0,
+      "era_20th_century": 1.0, "has_famous_catchphrase": 0.7}),
+
+    ("BTS Jungkook", "South Korean K-pop singer, member of BTS", "person", "en",
+     ["Чонгук", "Jungkook"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_music": 1.0, "from_asia": 1.0,
+      "era_21st_century": 1.0, "is_wealthy": 0.8}),
+
+    ("Drake", "Canadian rapper and singer", "person", "en",
+     ["Дрейк"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_music": 1.0, "from_usa": 0.7,
+      "era_21st_century": 1.0, "is_wealthy": 1.0}),
+
+    ("Billie Eilish", "American singer-songwriter, Gen Z pop icon", "person", "en",
+     ["Билли Айлиш"],
+     {"is_fictional": 0.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 0.8,
+      "is_villain": 0.0, "from_music": 1.0, "from_usa": 1.0,
+      "era_21st_century": 1.0, "is_wealthy": 0.8}),
+
+    # ──────────────── More comics / superheroes ────────────────
+
+    ("Doctor Strange", "Marvel sorcerer, former neurosurgeon", "character", "en",
+     ["Доктор Стрэндж"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_comics": 1.0, "from_usa": 1.0,
+      "has_superpower": 1.0, "from_science": 0.5, "wears_uniform": 0.8, "is_wealthy": 0.7}),
+
+    ("Black Panther", "Marvel superhero, king of Wakanda", "character", "en",
+     ["Чёрная Пантера", "T'Challa"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_comics": 1.0,
+      "has_superpower": 0.8, "wears_uniform": 1.0, "is_leader": 1.0, "is_wealthy": 1.0}),
+
+    ("Green Lantern", "DC superhero powered by a green power ring", "character", "en",
+     ["Зелёный Фонарь"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 0.7, "from_comics": 1.0, "from_usa": 1.0,
+      "has_superpower": 1.0, "wears_uniform": 1.0}),
+
+    ("Flash", "DC superhero with super speed", "character", "en",
+     ["Флэш", "Barry Allen"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 0.8, "from_comics": 1.0, "from_tv_series": 1.0,
+      "from_usa": 1.0, "has_superpower": 1.0, "wears_uniform": 1.0}),
+
+    ("Aquaman", "DC superhero, king of Atlantis", "character", "en",
+     ["Аквамен"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.5, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_comics": 1.0,
+      "has_superpower": 1.0, "wears_uniform": 0.7, "is_leader": 1.0, "is_wealthy": 1.0}),
+
+    ("Venom", "Marvel anti-hero, alien symbiote", "character", "en",
+     ["Веном"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.5, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.6, "from_movie": 1.0, "from_comics": 1.0, "from_usa": 1.0,
+      "has_superpower": 1.0}),
+
+    # ──────────────── Mythological / fairy tale ────────────────
+
+    ("Геракл", "Древнегреческий герой, сын Зевса", "character", "ru",
+     ["Hercules", "Геркулес"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.5, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 0.7, "from_book": 1.0, "from_europe": 1.0,
+      "has_superpower": 1.0, "from_history": 0.5, "era_ancient": 1.0}),
+
+    ("Одиссей", "Хитроумный царь Итаки из греческих мифов", "character", "ru",
+     ["Odysseus", "Ulysses"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_book": 1.0, "from_europe": 1.0,
+      "is_leader": 1.0, "era_ancient": 1.0, "from_history": 0.5}),
+
+    ("Кощей Бессмертный", "Злодей из русских сказок, хранит смерть в игле", "character", "ru",
+     ["Koschei"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.5, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 1.0, "from_book": 1.0, "from_russia": 1.0,
+      "has_superpower": 1.0, "is_wealthy": 0.8, "era_medieval": 0.8}),
+
+    ("Иван-дурак", "Младший сын из русских сказок, всегда побеждает", "character", "ru",
+     ["Ivan the Fool"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 0.7,
+      "is_villain": 0.0, "from_book": 1.0, "from_russia": 1.0,
+      "is_wealthy": 0.0, "era_medieval": 0.8}),
+
+    ("Снегурочка", "Внучка Деда Мороза, персонаж русских сказок", "character", "ru",
+     ["Snow Maiden"],
+     {"is_fictional": 1.0, "is_male": 0.0, "is_human": 0.5, "is_alive": 1.0, "is_adult": 0.5,
+      "is_villain": 0.0, "from_book": 0.7, "from_russia": 1.0,
+      "has_superpower": 0.5, "era_medieval": 0.5}),
+
+    # ──────────────── Internet / meme culture ────────────────
+
+    ("PewDiePie", "Swedish YouTuber, one of the most subscribed creators", "person", "en",
+     ["Пьюдипай", "Felix Kjellberg"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_europe": 1.0, "from_game": 0.5,
+      "era_21st_century": 1.0, "is_wealthy": 0.8}),
+
+    ("MrBeast", "American YouTuber known for expensive stunts and charity", "person", "en",
+     ["МрБист", "Jimmy Donaldson"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_usa": 1.0,
+      "era_21st_century": 1.0, "is_wealthy": 1.0}),
+
+    # ──────────────── More Russian culture ────────────────
+
+    ("Штирлиц", "Советский разведчик из фильма 17 мгновений весны", "character", "ru",
+     ["Stirlitz", "Исаев"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_tv_series": 1.0, "from_russia": 1.0,
+      "from_europe": 0.8, "wears_uniform": 1.0, "has_famous_catchphrase": 1.0,
+      "era_20th_century": 1.0}),
+
+    ("Остап Бендер", "Великий комбинатор из романов Ильфа и Петрова", "character", "ru",
+     ["Ostap Bender"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.5, "from_book": 1.0, "from_movie": 1.0, "from_russia": 1.0,
+      "has_famous_catchphrase": 1.0, "era_20th_century": 1.0}),
+
+    ("Маша", "Непоседливая девочка из мультфильма Маша и Медведь", "character", "ru",
+     ["Masha"],
+     {"is_fictional": 1.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 0.0,
+      "is_villain": 0.0, "from_tv_series": 1.0, "from_russia": 1.0,
+      "era_21st_century": 1.0}),
+
+    ("Леопольд", "Добрый кот из советского мультфильма", "character", "ru",
+     ["Кот Леопольд", "Leopold"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_tv_series": 1.0, "from_russia": 1.0,
+      "has_famous_catchphrase": 1.0, "era_20th_century": 1.0}),
+
+    ("Волк из Ну погоди", "Хулиганистый волк, преследует зайца", "character", "ru",
+     ["Wolf", "Ну погоди волк"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.7, "from_tv_series": 1.0, "from_russia": 1.0,
+      "has_famous_catchphrase": 1.0, "era_20th_century": 1.0}),
+
+    # ──────────────── Final batch to 200+ ────────────────
+
+    ("John Wick", "Legendary hitman seeking revenge, played by Keanu Reeves", "character", "en",
+     ["Джон Уик"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.3, "from_movie": 1.0, "from_usa": 1.0,
+      "era_21st_century": 1.0}),
+
+    ("Rocky Balboa", "Underdog boxer from the Rocky film series", "character", "en",
+     ["Рокки Бальбоа", "Rocky"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_sport": 1.0, "from_usa": 1.0,
+      "has_famous_catchphrase": 0.8, "era_20th_century": 1.0}),
+
+    ("Forrest Gump", "Kind simple-minded man who witnesses history", "character", "en",
+     ["Форрест Гамп"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_book": 1.0, "from_usa": 1.0,
+      "has_famous_catchphrase": 1.0, "from_sport": 0.4, "era_20th_century": 1.0}),
+
+    ("Hannibal Lecter", "Brilliant psychiatrist and cannibalistic serial killer", "character", "en",
+     ["Ганнибал Лектер", "Hannibal"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 1.0, "from_movie": 1.0, "from_book": 1.0, "from_tv_series": 0.8,
+      "from_usa": 0.5, "from_europe": 0.5, "from_science": 0.5,
+      "is_wealthy": 0.8, "era_20th_century": 1.0}),
+
+    ("Mulan", "Chinese warrior who disguises as a man to save her father", "character", "en",
+     ["Мулан"],
+     {"is_fictional": 1.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 0.8,
+      "is_villain": 0.0, "from_movie": 1.0, "from_book": 0.7, "from_asia": 1.0,
+      "wears_uniform": 1.0, "era_medieval": 0.8}),
+
+    ("Ryu", "Japanese martial artist from Street Fighter", "character", "en",
+     ["Рю"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_game": 1.0, "from_japan": 1.0, "from_asia": 1.0,
+      "wears_uniform": 0.7, "has_famous_catchphrase": 1.0, "has_superpower": 0.7}),
+
+    ("Lara Croft (reboot)", "Young archaeologist and survivor from Tomb Raider reboot", "character", "en",
+     ["Лара Крофт 2013"],
+     {"is_fictional": 1.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_game": 1.0, "from_movie": 0.5, "from_europe": 1.0,
+      "era_21st_century": 1.0}),
+
+    ("Pinocchio", "Wooden puppet who wants to become a real boy", "character", "en",
+     ["Пиноккио", "Буратино"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.5, "is_alive": 1.0, "is_adult": 0.0,
+      "is_villain": 0.0, "from_movie": 1.0, "from_book": 1.0, "from_europe": 1.0,
+      "has_famous_catchphrase": 0.5, "era_modern": 0.8}),
+
+    ("Дед Мороз", "Русский новогодний волшебник", "character", "ru",
+     ["Ded Moroz", "Father Frost"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.5, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_russia": 1.0, "has_superpower": 1.0,
+      "wears_uniform": 1.0, "is_wealthy": 0.5}),
+
+    ("Santa Claus", "Christmas gift-giver who lives at the North Pole", "character", "en",
+     ["Санта Клаус", "Santa"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.5, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_usa": 0.5, "from_europe": 0.5,
+      "has_superpower": 1.0, "wears_uniform": 1.0, "is_wealthy": 0.5,
+      "has_famous_catchphrase": 1.0}),
+
+    ("Чужой", "Инопланетный хищник из фильма Alien", "character", "ru",
+     ["Alien", "Xenomorph"],
+     {"is_fictional": 1.0, "is_male": 0.5, "is_human": 0.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 1.0, "from_movie": 1.0, "from_usa": 1.0,
+      "has_superpower": 0.5, "era_20th_century": 1.0}),
+
+    ("Predator", "Alien hunter who collects trophies from worthy prey", "character", "en",
+     ["Хищник"],
+     {"is_fictional": 1.0, "is_male": 1.0, "is_human": 0.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.7, "from_movie": 1.0, "from_usa": 1.0,
+      "has_superpower": 0.5, "wears_uniform": 0.7, "era_20th_century": 1.0}),
+
+    ("ET", "Friendly alien stranded on Earth from Spielberg's film", "character", "en",
+     ["Инопланетянин", "E.T."],
+     {"is_fictional": 1.0, "is_male": 0.5, "is_human": 0.0, "is_alive": 1.0, "is_adult": 0.5,
+      "is_villain": 0.0, "from_movie": 1.0, "from_usa": 1.0,
+      "has_superpower": 0.7, "has_famous_catchphrase": 1.0, "era_20th_century": 1.0}),
+
+    ("Опра Уинфри", "Американская телеведущая и медиамагнат", "person", "ru",
+     ["Oprah Winfrey", "Oprah"],
+     {"is_fictional": 0.0, "is_male": 0.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_tv_series": 0.8, "from_usa": 1.0,
+      "era_21st_century": 1.0, "is_leader": 0.8, "is_wealthy": 1.0}),
+
+    ("Майкл Джордан", "Величайший баскетболист всех времён", "person", "ru",
+     ["Michael Jordan", "MJ"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_sport": 1.0, "from_usa": 1.0,
+      "era_20th_century": 0.8, "era_21st_century": 0.5, "is_wealthy": 1.0,
+      "has_famous_catchphrase": 0.5}),
+
+    ("Коби Брайант", "Легендарный баскетболист Лейкерс", "person", "ru",
+     ["Kobe Bryant", "Kobe"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_sport": 1.0, "from_usa": 1.0,
+      "era_21st_century": 1.0, "is_wealthy": 1.0}),
+
+    ("Диего Марадона", "Аргентинский футболист, автор Руки Бога", "person", "ru",
+     ["Diego Maradona", "Maradona"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 0.0, "is_adult": 1.0,
+      "is_villain": 0.2, "from_sport": 1.0,
+      "era_20th_century": 1.0, "is_wealthy": 0.8, "has_famous_catchphrase": 0.7}),
+
+    ("Зинедин Зидан", "Французский футболист и тренер", "person", "ru",
+     ["Zinedine Zidane", "Zidane"],
+     {"is_fictional": 0.0, "is_male": 1.0, "is_human": 1.0, "is_alive": 1.0, "is_adult": 1.0,
+      "is_villain": 0.0, "from_sport": 1.0, "from_europe": 1.0,
+      "era_21st_century": 1.0, "is_leader": 0.7, "is_wealthy": 0.9}),
 ]
 
 

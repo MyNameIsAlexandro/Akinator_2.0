@@ -131,6 +131,38 @@ class Repository:
             for r in rows
         ]
 
+    async def find_entity_by_name(self, name: str) -> Entity | None:
+        db = await self._conn()
+        cursor = await db.execute(
+            "SELECT * FROM entities WHERE LOWER(name) = LOWER(?)", (name,),
+        )
+        row = await cursor.fetchone()
+        if row is None:
+            return None
+        return Entity(
+            id=row["id"], name=row["name"], description=row["description"],
+            entity_type=row["entity_type"], language=row["language"],
+            play_count=row["play_count"],
+            guess_success_count=row["guess_success_count"],
+        )
+
+    async def get_all_entity_attributes(self) -> dict[int, dict[str, float]]:
+        """Batch-load all entity attributes in one query."""
+        db = await self._conn()
+        cursor = await db.execute(
+            """SELECT ea.entity_id, a.key, ea.value
+               FROM entity_attributes ea
+               JOIN attributes a ON a.id = ea.attribute_id"""
+        )
+        rows = await cursor.fetchall()
+        result: dict[int, dict[str, float]] = {}
+        for r in rows:
+            eid = r[0]
+            if eid not in result:
+                result[eid] = {}
+            result[eid][r[1]] = r[2]
+        return result
+
     async def increment_play_count(self, entity_id: int) -> None:
         db = await self._conn()
         await db.execute(
