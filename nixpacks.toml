@@ -1,8 +1,8 @@
-[phases.setup]
-nixPkgs = ["python311"]
-
 [phases.install]
-cmds = ["pip install -r requirements.txt && pip install -e ."]
+cmds = ["pip install -r requirements.txt"]
+
+[variables]
+PYTHONPATH = "/app/src"
 
 [start]
-cmd = "python -m akinator.seed && python -m akinator"
+cmd = "PYTHONPATH=/app/src python -m akinator.seed && PYTHONPATH=/app/src python -m akinator"
