@@ -106,12 +106,13 @@ class TestGuessDecision:
         assert self.manager.should_guess(session) is True
 
     def test_should_guess_when_two_candidates_left(self):
-        """Guess when only 2 candidates with significant weight remain."""
+        """Guess when only 2 candidates with significant weight remain (after enough questions)."""
         session = GameSession(
             session_id="test", user_id=1,
             candidate_ids=[1, 2],
             weights=[0.6, 0.4],
             mode=GameMode.ASKING,
+            question_count=5,
         )
         assert self.manager.should_guess(session) is True
 

@@ -84,6 +84,41 @@ def _find_attr_by_key(key: str) -> Attribute | None:
     return None
 
 
+async def _handle_stale_session(callback: CallbackQuery) -> bool:
+    """Detect stale session (e.g. after bot restart) and auto-restart game.
+
+    Returns True if session was stale and handled (caller should return).
+    """
+    store = get_session_store()
+    user_id = callback.from_user.id
+    session = store.get(user_id)
+    if session is not None:
+        return False
+
+    # Session lost — auto-restart
+    lang = "ru"
+    new_session = _session_manager.create_session(user_id=user_id, language=lang)
+    store[user_id] = new_session
+
+    if lang == "ru":
+        text = (
+            "Бот был обновлён, сессия сброшена.\n"
+            "Начинаем новую игру!\n\n"
+            "Загадайте персонажа — реального или вымышленного.\n"
+            "Можете дать подсказку (описание в 1 фразе, без имени) или пропустить."
+        )
+    else:
+        text = (
+            "Bot was updated, session reset.\n"
+            "Starting a new game!\n\n"
+            "Think of a character — real or fictional.\n"
+            "You can give me a hint (describe in 1 phrase, no name) or skip."
+        )
+    await callback.message.edit_text(text, reply_markup=hint_keyboard(lang))
+    await callback.answer()
+    return True
+
+
 # ──────────────────────────────────────────────
 # Command handlers
 # ──────────────────────────────────────────────
@@ -212,12 +247,11 @@ async def handle_help(message: Message) -> None:
 
 @router.callback_query(F.data.startswith("hint:"))
 async def handle_hint_callback(callback: CallbackQuery) -> None:
+    if await _handle_stale_session(callback):
+        return
     store = get_session_store()
     user_id = callback.from_user.id
     session = store.get(user_id)
-    if not session:
-        await callback.answer("No game. Use /new")
-        return
 
     action = callback.data.split(":")[1]
     lang = _get_lang(session)
@@ -240,12 +274,11 @@ async def handle_hint_callback(callback: CallbackQuery) -> None:
 
 @router.callback_query(F.data.startswith("answer:"))
 async def handle_answer_callback(callback: CallbackQuery) -> None:
+    if await _handle_stale_session(callback):
+        return
     store = get_session_store()
     user_id = callback.from_user.id
     session = store.get(user_id)
-    if session is None:
-        await callback.answer("No game in progress. Use /new to start!")
-        return
 
     answer_key = callback.data.split(":")[1]
     answer = Answer(answer_key)
@@ -288,12 +321,11 @@ async def handle_answer_callback(callback: CallbackQuery) -> None:
 
 @router.callback_query(F.data.startswith("guess:"))
 async def handle_guess_callback(callback: CallbackQuery) -> None:
+    if await _handle_stale_session(callback):
+        return
     store = get_session_store()
     user_id = callback.from_user.id
     session = store.get(user_id)
-    if session is None:
-        await callback.answer("No game in progress.")
-        return
 
     action = callback.data.split(":")[1]
     lang = _get_lang(session)
@@ -332,8 +364,24 @@ async def handle_guess_callback(callback: CallbackQuery) -> None:
 @router.callback_query(F.data == "action:new_game")
 async def handle_new_game_callback(callback: CallbackQuery) -> None:
     await callback.answer()
-    # Simulate /new command
-    await handle_new(callback.message)
+    # Create a new game directly (works even after redeploy)
+    store = get_session_store()
+    user_id = callback.from_user.id
+    lang = store[user_id].language if user_id in store else "ru"
+    session = _session_manager.create_session(user_id=user_id, language=lang)
+    store[user_id] = session
+
+    if lang == "ru":
+        text = (
+            "Загадайте персонажа — реального или вымышленного.\n"
+            "Можете дать подсказку (описание в 1 фразе, без имени) или пропустить."
+        )
+    else:
+        text = (
+            "Think of a character — real or fictional.\n"
+            "You can give me a hint (describe in 1 phrase, no name) or skip."
+        )
+    await callback.message.edit_text(text, reply_markup=hint_keyboard(lang))
 
 
 # ──────────────────────────────────────────────

@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from akinator.config import GUESS_THRESHOLD, MAX_QUESTIONS, SECOND_GUESS_THRESHOLD
+from akinator.config import GUESS_THRESHOLD, MAX_QUESTIONS, PRUNE_THRESHOLD, SECOND_GUESS_THRESHOLD
 from akinator.db.models import Answer, Attribute, Entity, GameMode, GameSession, QAPair
 from akinator.engine.scoring import ScoringEngine
 from akinator.engine.question_policy import QuestionPolicy
@@ -49,9 +49,11 @@ class GameSessionManager:
             return True
         if session.question_count >= MAX_QUESTIONS:
             return True
-        active = sum(1 for w in session.weights if w > 0.01)
-        if active <= 2:
-            return True
+        # Only consider early stop after enough questions have been asked
+        if session.question_count >= 5:
+            active = sum(1 for w in session.weights if w > PRUNE_THRESHOLD)
+            if active <= 2:
+                return True
         return False
 
     def get_guess_candidate(self, session: GameSession) -> int:
