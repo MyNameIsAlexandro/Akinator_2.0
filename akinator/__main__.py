@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import shutil
 import sys
 
 from aiogram import Bot, Dispatcher
@@ -19,6 +20,8 @@ logging.basicConfig(
 logger = logging.getLogger("akinator")
 
 DB_PATH = os.environ.get("AKINATOR_DB_PATH", "data/akinator.db")
+# Pre-built database shipped with the repo (backup)
+BUNDLED_DB = os.path.join(os.path.dirname(__file__), "data", "akinator.db")
 
 
 async def load_game_data(repo: Repository) -> None:
@@ -36,21 +39,30 @@ async def load_game_data(repo: Repository) -> None:
     logger.info("Loaded %d entities, %d attributes", len(entities), len(attributes))
 
 
+def _ensure_database() -> None:
+    """Copy bundled DB from repo if runtime DB doesn't exist."""
+    os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
+    if not os.path.exists(DB_PATH) and os.path.exists(BUNDLED_DB):
+        shutil.copy2(BUNDLED_DB, DB_PATH)
+        logger.info("Copied bundled database to %s", DB_PATH)
+
+
 async def main() -> None:
     token = os.environ.get("BOT_TOKEN") or os.environ.get("TELEGRAM_BOT_TOKEN")
     if not token:
         logger.error("BOT_TOKEN environment variable is required")
         sys.exit(1)
 
-    # Init database and load data
-    os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
+    # Copy bundled DB if runtime path is empty
+    _ensure_database()
+
     repo = Repository(DB_PATH)
     await repo.init_db()
 
     entity_count = len(await repo.get_all_entities())
     if entity_count == 0:
         logger.warning(
-            "Database is empty! Run: python -m akinator.seed to populate with sample data"
+            "Database is empty! Run: python -m akinator.generate_db to populate."
         )
     else:
         await load_game_data(repo)
