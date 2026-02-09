@@ -236,6 +236,35 @@ class Repository:
         rows = await cursor.fetchall()
         return [(r[0], r[1]) for r in rows]
 
+    async def find_entity_by_name_or_alias(self, name: str) -> Entity | None:
+        """Search by entity name OR any alias (case-insensitive)."""
+        entity = await self.find_entity_by_name(name)
+        if entity:
+            return entity
+        db = await self._conn()
+        cursor = await db.execute(
+            """SELECT e.* FROM entities e
+               JOIN entity_aliases ea ON ea.entity_id = e.id
+               WHERE LOWER(ea.alias) = LOWER(?)""",
+            (name,),
+        )
+        row = await cursor.fetchone()
+        if row is None:
+            return None
+        return Entity(
+            id=row["id"], name=row["name"], description=row["description"],
+            entity_type=row["entity_type"], language=row["language"],
+            play_count=row["play_count"],
+            guess_success_count=row["guess_success_count"],
+        )
+
+    async def get_entity_count(self) -> int:
+        """Return total number of entities."""
+        db = await self._conn()
+        cursor = await db.execute("SELECT COUNT(*) FROM entities")
+        row = await cursor.fetchone()
+        return row[0]
+
     # ---- Embeddings ----
 
     async def set_embedding(self, entity_id: int, embedding: np.ndarray) -> None:
