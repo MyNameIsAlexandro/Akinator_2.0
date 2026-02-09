@@ -42,13 +42,22 @@ async def load_game_data(repo: Repository) -> None:
     logger.info("Loaded %d entities, %d attributes", len(entities), len(attributes))
 
 
-def _ensure_database() -> None:
-    """Copy bundled DB from repo if runtime DB doesn't exist."""
+async def _ensure_database(backup: GitHubBackup | None) -> None:
+    """Restore DB: try GitHub backup first, then fall back to bundled DB."""
     os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
     if os.path.exists(DB_PATH):
         size_mb = os.path.getsize(DB_PATH) / (1024 * 1024)
         logger.info("Using existing database: %s (%.1f MB)", DB_PATH, size_mb)
-    elif os.path.exists(BUNDLED_DB):
+        return
+
+    # Try restoring from GitHub (has the latest learned entities)
+    if backup:
+        logger.info("No local DB found — trying to restore from GitHub...")
+        if await backup.restore_from_github():
+            return
+
+    # Fall back to bundled DB shipped with the repo
+    if os.path.exists(BUNDLED_DB):
         shutil.copy2(BUNDLED_DB, DB_PATH)
         size_mb = os.path.getsize(DB_PATH) / (1024 * 1024)
         logger.info("Copied bundled database to %s (%.1f MB)", DB_PATH, size_mb)
@@ -60,8 +69,23 @@ async def main() -> None:
         logger.error("BOT_TOKEN environment variable is required")
         sys.exit(1)
 
-    # Copy bundled DB if runtime path is empty
-    _ensure_database()
+    # Initialize GitHub backup early (needed for DB restore)
+    github_token = os.environ.get("GITHUB_TOKEN")
+    backup = None
+    if github_token:
+        backup = GitHubBackup(
+            token=github_token,
+            repo=GITHUB_REPO,
+            db_path=DB_PATH,
+            interval_hours=BACKUP_INTERVAL_HOURS,
+            min_new_entities=BACKUP_MIN_NEW_ENTITIES,
+        )
+        set_backup(backup)
+    else:
+        logger.warning("GITHUB_TOKEN not set — auto-backup disabled")
+
+    # Restore DB: GitHub backup → bundled DB → empty
+    await _ensure_database(backup)
 
     repo = Repository(DB_PATH)
     await repo.init_db()
@@ -86,22 +110,10 @@ async def main() -> None:
     else:
         logger.warning("OPENAI_API_KEY not set — smart learning disabled")
 
-    # Initialize GitHub backup (optional)
-    github_token = os.environ.get("GITHUB_TOKEN")
-    backup = None
-    if github_token:
-        backup = GitHubBackup(
-            token=github_token,
-            repo=GITHUB_REPO,
-            db_path=DB_PATH,
-            interval_hours=BACKUP_INTERVAL_HOURS,
-            min_new_entities=BACKUP_MIN_NEW_ENTITIES,
-        )
-        set_backup(backup)
+    # Start periodic backup scheduler
+    if backup:
         backup.start()
         logger.info("GitHub auto-backup enabled (repo: %s)", GITHUB_REPO)
-    else:
-        logger.warning("GITHUB_TOKEN not set — auto-backup disabled")
 
     # Start bot
     bot = Bot(token=token)

@@ -52,6 +52,46 @@ class GitHubBackup:
                 return data.get("sha")
             return None
 
+    async def restore_from_github(self) -> bool:
+        """Download DB from GitHub repo. Returns True on success."""
+        try:
+            async with aiohttp.ClientSession() as session:
+                url = f"{GITHUB_API}/repos/{self.repo}/contents/{self.file_path}"
+                headers = {
+                    "Authorization": f"token {self.token}",
+                    "Accept": "application/vnd.github.v3+json",
+                }
+                async with session.get(url, headers=headers) as resp:
+                    if resp.status != 200:
+                        logger.info("No backup found on GitHub (status %d)", resp.status)
+                        return False
+                    data = await resp.json()
+
+                download_url = data.get("download_url")
+                if not download_url:
+                    logger.warning("GitHub response missing download_url")
+                    return False
+
+                async with session.get(download_url) as resp:
+                    if resp.status != 200:
+                        logger.error("Failed to download DB: %d", resp.status)
+                        return False
+                    content = await resp.read()
+
+                os.makedirs(os.path.dirname(self.db_path) or ".", exist_ok=True)
+                with open(self.db_path, "wb") as f:
+                    f.write(content)
+
+                size_mb = len(content) / (1024 * 1024)
+                logger.info(
+                    "Restored DB from GitHub: %.1f MB → %s", size_mb, self.db_path,
+                )
+                return True
+
+        except Exception:
+            logger.exception("Failed to restore DB from GitHub")
+            return False
+
     async def backup_now(self) -> bool:
         """Push current DB to GitHub. Returns True on success."""
         if not os.path.exists(self.db_path):
