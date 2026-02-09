@@ -28,6 +28,13 @@ ATTRIBUTE_KEYS = [
     "is_leader", "is_wealthy",
 ]
 
+# Mutually exclusive attribute groups.
+# When user confirms one attribute (yes/probably_yes), skip the rest in the group.
+EXCLUSIVE_GROUPS: list[list[str]] = [
+    ["era_ancient", "era_medieval", "era_modern", "era_20th_century", "era_21st_century"],
+    ["from_usa", "from_europe", "from_russia", "from_asia", "from_japan"],
+]
+
 # LLM attribute merge weights
 LLM_QA_WEIGHT = 0.3
 LLM_KNOWLEDGE_WEIGHT = 0.7

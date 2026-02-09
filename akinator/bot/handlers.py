@@ -375,6 +375,14 @@ async def handle_answer_callback(callback: CallbackQuery) -> None:
     answer = Answer(answer_key)
     lang = _get_lang(session)
 
+    # Answer display labels
+    _answer_labels = {
+        "ru": {"yes": "Да", "no": "Нет", "probably_yes": "Скорее да",
+                "probably_no": "Скорее нет", "dont_know": "Не знаю"},
+        "en": {"yes": "Yes", "no": "No", "probably_yes": "Probably yes",
+                "probably_no": "Probably no", "dont_know": "Don't know"},
+    }
+
     # Find the last asked attribute
     if session.asked_attributes:
         last_attr_id = session.asked_attributes[-1]
@@ -392,6 +400,12 @@ async def handle_answer_callback(callback: CallbackQuery) -> None:
         session.asked_attributes.pop()
         _session_manager.process_answer(session, _entities, attr, answer)
 
+    # Edit previous message to show selected answer (remove buttons)
+    answer_label = _answer_labels.get(lang, _answer_labels["en"]).get(answer_key, answer_key)
+    q_num = session.question_count
+    if attr:
+        q_text = _attr_question(attr, lang)
+        await callback.message.edit_text(f"**Q{q_num}:** {q_text} — **{answer_label}**", parse_mode="Markdown")
     await callback.answer()
 
     # Check if we should guess
@@ -405,7 +419,7 @@ async def handle_answer_callback(callback: CallbackQuery) -> None:
             text = f"Я думаю, это **{name}**! ({max_w:.0%} уверенность)"
         else:
             text = f"I think it's **{name}**! ({max_w:.0%} confident)"
-        await callback.message.edit_text(text, reply_markup=guess_keyboard(lang))
+        await callback.message.answer(text, reply_markup=guess_keyboard(lang), parse_mode="Markdown")
     else:
         await _ask_next_question(callback.message, session)
 

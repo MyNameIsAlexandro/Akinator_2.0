@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import math
 
-from akinator.db.models import Attribute, Entity, GameSession
+from akinator.config import EXCLUSIVE_GROUPS
+from akinator.db.models import Answer, Attribute, Entity, GameSession
 
 
 def _entropy(weights: list[float]) -> float:
@@ -64,6 +65,34 @@ class QuestionPolicy:
         ig = h_current - expected_h
         return max(ig, 0.0)
 
+    @staticmethod
+    def _get_excluded_keys(session: GameSession, attributes: list[Attribute]) -> set[str]:
+        """Find attribute keys to skip based on exclusive groups.
+
+        When a user answered yes/probably_yes for an attribute in an
+        exclusive group, all OTHER attributes in that group are skipped.
+        """
+        if not session.history:
+            return set()
+
+        # Build attr_id → key lookup
+        id_to_key = {a.id: a.key for a in attributes}
+
+        # Collect confirmed keys (yes / probably_yes answers)
+        confirmed_keys: set[str] = set()
+        for qa in session.history:
+            if qa.answer in (Answer.YES, Answer.PROBABLY_YES):
+                confirmed_keys.add(qa.attribute_key)
+
+        excluded: set[str] = set()
+        for group in EXCLUSIVE_GROUPS:
+            for key in group:
+                if key in confirmed_keys:
+                    # Exclude all OTHER keys in this group
+                    excluded.update(k for k in group if k != key)
+                    break
+        return excluded
+
     def select(
         self,
         session: GameSession,
@@ -71,11 +100,14 @@ class QuestionPolicy:
         attributes: list[Attribute],
     ) -> str | None:
         asked_set = set(session.asked_attributes)
+        excluded_keys = self._get_excluded_keys(session, attributes)
         best_key = None
         best_ig = -1.0
 
         for attr in attributes:
             if attr.id in asked_set:
+                continue
+            if attr.key in excluded_keys:
                 continue
             ig = self.compute_info_gain(session, entities, attr.key)
             if ig > best_ig:
