@@ -267,24 +267,81 @@ COUNTRY_ATTRS: dict[str, dict[str, float]] = {
 }
 
 UNIVERSE_ATTRS: dict[str, dict[str, float]] = {
-    "marvel": {"from_comics": 1.0, "from_movie": 0.8, "from_usa": 1.0, "has_superpower": 0.8, "wears_uniform": 0.8},
-    "dc": {"from_comics": 1.0, "from_movie": 0.7, "from_usa": 1.0, "has_superpower": 0.8, "wears_uniform": 0.8},
-    "star wars": {"from_movie": 1.0, "from_usa": 1.0},
+    "marvel": {"from_comics": 1.0, "from_movie": 0.8, "from_usa": 1.0, "has_superpower": 0.8, "wears_uniform": 0.8, "era_21st_century": 0.7},
+    "dc": {"from_comics": 1.0, "from_movie": 0.7, "from_usa": 1.0, "has_superpower": 0.8, "wears_uniform": 0.8, "era_21st_century": 0.7},
+    "star wars": {"from_movie": 1.0, "from_usa": 1.0, "has_superpower": 0.5},
     "middle-earth": {"from_book": 1.0, "from_movie": 1.0, "from_europe": 0.7, "era_medieval": 0.5},
-    "wizarding world": {"from_book": 1.0, "from_movie": 1.0, "from_europe": 1.0, "has_superpower": 0.9},
-    "harry potter": {"from_book": 1.0, "from_movie": 1.0, "from_europe": 1.0, "has_superpower": 0.9},
-    "dragon ball": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 1.0},
-    "naruto": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.8},
-    "one piece": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.7},
-    "pokémon": {"from_anime": 1.0, "from_game": 1.0, "from_japan": 1.0, "from_asia": 1.0},
-    "disney": {"from_movie": 1.0, "from_usa": 1.0},
-    "simpsons": {"from_tv_series": 1.0, "from_usa": 1.0},
-    "game of thrones": {"from_tv_series": 1.0, "from_book": 1.0, "era_medieval": 0.8},
-    "sonic": {"from_game": 1.0, "from_japan": 1.0, "has_superpower": 0.7},
-    "super mario": {"from_game": 1.0, "from_japan": 1.0},
+    "wizarding world": {"from_book": 1.0, "from_movie": 1.0, "from_europe": 1.0, "has_superpower": 0.9, "era_21st_century": 0.8},
+    "harry potter": {"from_book": 1.0, "from_movie": 1.0, "from_europe": 1.0, "has_superpower": 0.9, "era_21st_century": 0.8},
+    "dragon ball": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 1.0, "era_21st_century": 0.6},
+    "naruto": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.8, "era_21st_century": 0.7},
+    "one piece": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.7, "era_21st_century": 0.7},
+    "pokémon": {"from_anime": 1.0, "from_game": 1.0, "from_japan": 1.0, "from_asia": 1.0, "is_human": 0.3, "era_21st_century": 0.7},
+    "disney": {"from_movie": 1.0, "from_usa": 1.0, "era_21st_century": 0.6},
+    "simpsons": {"from_tv_series": 1.0, "from_usa": 1.0, "era_21st_century": 0.8},
+    "game of thrones": {"from_tv_series": 1.0, "from_book": 1.0, "era_medieval": 0.8, "from_europe": 0.7},
+    "sonic": {"from_game": 1.0, "from_japan": 1.0, "has_superpower": 0.7, "is_human": 0.0},
+    "super mario": {"from_game": 1.0, "from_japan": 1.0, "is_human": 0.8},
     "zelda": {"from_game": 1.0, "from_japan": 1.0},
     "final fantasy": {"from_game": 1.0, "from_japan": 1.0},
     "street fighter": {"from_game": 1.0, "from_japan": 1.0},
+    "transformers": {"from_movie": 1.0, "from_usa": 1.0, "is_human": 0.0, "has_superpower": 0.7},
+    "shrek": {"from_movie": 1.0, "from_usa": 1.0, "is_human": 0.3},
+    "spongebob": {"from_tv_series": 1.0, "from_usa": 1.0, "is_human": 0.0},
+    "south park": {"from_tv_series": 1.0, "from_usa": 1.0, "era_21st_century": 0.9},
+    "family guy": {"from_tv_series": 1.0, "from_usa": 1.0, "era_21st_century": 0.8},
+    "rick and morty": {"from_tv_series": 1.0, "from_usa": 1.0, "era_21st_century": 1.0},
+    "sherlock holmes": {"from_book": 1.0, "from_europe": 1.0, "era_modern": 0.8, "is_human": 1.0},
+    "breaking bad": {"from_tv_series": 1.0, "from_usa": 1.0, "era_21st_century": 1.0, "is_human": 1.0},
+    "stranger things": {"from_tv_series": 1.0, "from_usa": 1.0, "era_20th_century": 0.8, "has_superpower": 0.5},
+    "demon slayer": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.8},
+    "attack on titan": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.6, "from_europe": 0.5},
+    "jojo": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 1.0},
+    "death note": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.8},
+    "hunter": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.7},
+    "bleach": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.9},
+    "my hero academia": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 1.0},
+    "mortal kombat": {"from_game": 1.0, "from_usa": 1.0, "has_superpower": 0.7},
+    "resident evil": {"from_game": 1.0, "from_japan": 1.0},
+    "witcher": {"from_game": 1.0, "from_book": 1.0, "from_europe": 1.0, "era_medieval": 0.7, "has_superpower": 0.6},
+    "minecraft": {"from_game": 1.0},
+    "overwatch": {"from_game": 1.0, "from_usa": 0.5, "has_superpower": 0.5, "wears_uniform": 0.8},
+    "genshin": {"from_game": 1.0, "from_asia": 1.0, "has_superpower": 0.8},
+}
+
+# Fictional character occupation → attribute mappings
+FICTIONAL_OCCUPATION_ATTRS: dict[str, dict[str, float]] = {
+    "villain": {"is_villain": 1.0},
+    "antagonist": {"is_villain": 0.9},
+    "supervillain": {"is_villain": 1.0, "has_superpower": 0.9},
+    "superhero": {"is_villain": 0.0, "has_superpower": 0.9, "wears_uniform": 0.8},
+    "hero": {"is_villain": 0.0},
+    "king": {"is_leader": 1.0, "is_wealthy": 0.9},
+    "queen": {"is_leader": 1.0, "is_wealthy": 0.9, "is_male": 0.0},
+    "prince": {"is_wealthy": 0.8, "is_leader": 0.5},
+    "princess": {"is_wealthy": 0.8, "is_leader": 0.5, "is_male": 0.0},
+    "pirate": {"is_villain": 0.5, "wears_uniform": 0.5},
+    "knight": {"wears_uniform": 1.0, "is_leader": 0.4},
+    "soldier": {"wears_uniform": 1.0},
+    "warrior": {"wears_uniform": 0.6},
+    "wizard": {"has_superpower": 0.9},
+    "witch": {"has_superpower": 0.9, "is_male": 0.0},
+    "detective": {"is_human": 1.0},
+    "robot": {"is_human": 0.0},
+    "android": {"is_human": 0.1},
+    "cyborg": {"is_human": 0.5, "has_superpower": 0.6},
+    "alien": {"is_human": 0.0},
+    "god": {"has_superpower": 1.0, "is_leader": 0.7, "is_human": 0.3},
+    "deity": {"has_superpower": 1.0, "is_leader": 0.7, "is_human": 0.3},
+    "demon": {"has_superpower": 0.8, "is_villain": 0.7, "is_human": 0.0},
+    "vampire": {"has_superpower": 0.7, "is_human": 0.3},
+    "monster": {"is_human": 0.0, "is_villain": 0.5},
+    "ninja": {"has_superpower": 0.4, "wears_uniform": 0.7, "from_asia": 0.7},
+    "spy": {"is_human": 1.0},
+    "thief": {"is_villain": 0.5},
+    "assassin": {"is_villain": 0.6},
+    "scientist": {"from_science": 0.7, "is_human": 1.0},
+    "doctor": {"is_human": 1.0},
 }
 
 
@@ -625,6 +682,7 @@ async def import_fictional(repo: Repository, attr_ids: dict[str, int],
             genders = _fetch_single_property(QUERY_GENDER, qids, "genderLabel")
             universes = _fetch_property(QUERY_UNIVERSE, qids, "universeLabel")
             medias = _fetch_property(QUERY_MEDIA, qids, "mediaLabel")
+            occupations = _fetch_property(QUERY_OCCUPATIONS, qids, "occupationLabel")
 
             # Step 3: Process and insert into DB
             new_in_batch = 0
@@ -637,7 +695,7 @@ async def import_fictional(repo: Repository, attr_ids: dict[str, int],
                 ru_name = info["ru_name"]
 
                 attrs: dict[str, float] = {
-                    "is_fictional": 1.0, "is_adult": 1.0,
+                    "is_fictional": 1.0, "is_adult": 1.0, "is_human": 0.8,
                 }
 
                 # Gender
@@ -649,6 +707,14 @@ async def import_fictional(repo: Repository, attr_ids: dict[str, int],
                 uni_list = universes.get(qid, [])
                 med_list = medias.get(qid, [])
                 attrs.update(_universe_attrs("|".join(uni_list), "|".join(med_list)))
+
+                # Occupations (villain, hero, robot, etc.)
+                occ_list = occupations.get(qid, [])
+                for occ in occ_list:
+                    occ_lower = occ.strip().lower()
+                    for key, vals in FICTIONAL_OCCUPATION_ATTRS.items():
+                        if key in occ_lower:
+                            attrs.update(vals)
 
                 lang = "ru" if _is_cyrillic(name) else "en"
                 eid = await repo.add_entity(name, "wikidata", "character", lang)

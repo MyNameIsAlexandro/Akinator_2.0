@@ -1,9 +1,16 @@
-"""LLM Client — OpenAI API wrapper."""
+"""LLM Client — OpenAI-compatible API wrapper.
+
+Supports any OpenAI-compatible provider via env vars:
+  OPENAI_API_KEY    — API key
+  OPENAI_BASE_URL   — Base URL (e.g. https://api.groq.com/openai/v1)
+  LLM_MODEL         — Chat model name (default: gpt-4o-mini)
+"""
 
 from __future__ import annotations
 
 import json
 import logging
+import os
 
 import numpy as np
 
@@ -11,16 +18,19 @@ from akinator.config import ATTRIBUTE_KEYS, EMBEDDING_DIM
 
 logger = logging.getLogger(__name__)
 
+LLM_MODEL = os.environ.get("LLM_MODEL", "gpt-4o-mini")
+
 
 class LLMClient:
 
     def __init__(self, api_key: str):
         self.api_key = api_key
+        self.model = LLM_MODEL
 
     @staticmethod
     def _get_openai_client():
         from openai import AsyncOpenAI
-        return AsyncOpenAI()
+        return AsyncOpenAI()  # reads OPENAI_API_KEY + OPENAI_BASE_URL from env
 
     async def get_embedding(self, text: str) -> np.ndarray:
         client = self._get_openai_client()
@@ -41,7 +51,7 @@ class LLMClient:
         client = self._get_openai_client()
         lang_name = "Russian" if language == "ru" else "English"
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=self.model,
             messages=[
                 {"role": "system", "content": (
                     f"You are a question formatter for a guessing game. "
@@ -60,7 +70,7 @@ class LLMClient:
         client = self._get_openai_client()
         keys_str = ", ".join(attribute_keys)
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=self.model,
             messages=[
                 {"role": "system", "content": (
                     "You extract attribute probabilities from character descriptions. "
@@ -102,7 +112,7 @@ class LLMClient:
 
         try:
             response = await client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=self.model,
                 messages=[
                     {"role": "system", "content": (
                         "You help identify characters and real people for a guessing game. "
@@ -180,7 +190,7 @@ class LLMClient:
             f"- Q: {q} → A: {a}" for q, a in history
         )
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=self.model,
             messages=[
                 {"role": "system", "content": (
                     f"Explain your reasoning in the guessing game in {lang_name}. "
