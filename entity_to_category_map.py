@@ -454,6 +454,167 @@ ENTITY_OVERRIDES = {
         "is_child_friendly": 0.6,
         "from_art": 0.3,
     },
+
+    # ──────────────────────────────────────────
+    # New overrides to fix confusion pairs
+    # ──────────────────────────────────────────
+
+    # Deadpool vs Spider-Man - Deadpool is R-rated, very comedic, anti-hero
+    "Deadpool": {
+        "is_child_friendly": 0.0,
+        "is_comedic": 1.0,
+        "is_villain": 0.4,  # Anti-hero
+        "is_dark_brooding": 0.0,
+        "has_famous_catchphrase": 1.0,
+        "wears_mask": 1.0,
+        "has_facial_hair": 0.0,  # Scarred under mask
+        "from_movie": 1.0,
+    },
+
+    # Batman vs Black Panther - Batman has no powers, uses tech/gadgets
+    "Batman": {
+        "has_superpower": 0.0,
+        "is_wealthy": 1.0,
+        "is_dark_brooding": 1.0,
+        "from_usa": 1.0,
+        "from_africa": 0.0,
+        "wears_mask": 1.0,
+        "has_armor": 0.3,
+        "is_leader": 0.3,
+    },
+    "Black Panther": {
+        "has_superpower": 0.7,
+        "is_wealthy": 1.0,
+        "is_dark_brooding": 0.3,
+        "from_usa": 0.3,
+        "from_africa": 1.0,
+        "wears_mask": 1.0,
+        "has_armor": 1.0,
+        "is_leader": 1.0,
+    },
+
+    # Naruto vs Saitama vs Luffy - distinguish anime protagonists
+    "Naruto": {
+        "is_comedic": 0.4,
+        "has_famous_catchphrase": 1.0,  # "Believe it!"
+        "is_leader": 1.0,  # Becomes Hokage
+        "has_superpower": 1.0,
+        "wears_uniform": 0.8,  # Orange outfit
+        "has_facial_hair": 0.0,
+        "from_japan": 1.0,
+        "is_action_hero": 1.0,
+    },
+    "Luffy": {
+        "is_comedic": 0.7,  # More comedic than Naruto
+        "has_famous_catchphrase": 1.0,  # "I'm gonna be King of the Pirates!"
+        "is_leader": 1.0,  # Captain
+        "has_superpower": 1.0,  # Rubber powers
+        "wears_uniform": 0.3,  # Casual clothes, straw hat
+        "has_facial_hair": 0.0,
+        "from_japan": 1.0,
+        "is_action_hero": 1.0,
+        "is_wealthy": 0.0,  # Pirate, not rich
+        "from_sport": 0.0,
+        "is_dark_brooding": 0.0,  # Always cheerful
+    },
+    "Saitama": {
+        "is_comedic": 1.0,  # One Punch Man is comedy
+        "has_famous_catchphrase": 0.5,
+        "is_leader": 0.0,
+        "has_superpower": 1.0,
+        "wears_uniform": 0.3,  # Plain hero suit
+        "has_facial_hair": 0.0,
+        "is_dark_brooding": 0.0,
+    },
+
+    # Thor vs Black Panther - Thor is Norse god with hammer
+    "Thor": {
+        "from_europe": 1.0,  # Norse mythology
+        "from_africa": 0.0,
+        "has_superpower": 1.0,
+        "is_leader": 0.8,  # King of Asgard
+        "has_armor": 1.0,
+        "has_facial_hair": 0.6,
+        "wears_mask": 0.0,
+    },
+
+    # Freddie Mercury vs Elvis - different decades and styles
+    "Фредди Меркьюри": {
+        "born_1940s": 1.0,
+        "born_1930s": 0.0,
+        "from_europe": 1.0,  # UK based
+        "from_africa": 0.2,  # Born in Zanzibar
+        "has_facial_hair": 1.0,  # Famous mustache
+        "is_alive": 0.0,
+        "era_20th_century": 1.0,
+    },
+    "Elvis Presley": {
+        "born_1930s": 1.0,
+        "born_1940s": 0.0,
+        "from_usa": 1.0,
+        "from_europe": 0.0,
+        "has_facial_hair": 0.0,  # Clean shaven
+        "is_alive": 0.0,
+        "era_20th_century": 1.0,
+    },
+
+    # Maui vs Genie - Maui is Polynesian demigod, Genie is from Arabia
+    "Maui": {
+        "from_oceania": 1.0,
+        "from_middle_east": 0.0,
+        "has_superpower": 1.0,
+        "is_human": 0.5,  # Demigod
+        "is_comedic": 0.6,
+        "has_famous_catchphrase": 1.0,  # "You're welcome!"
+        "has_facial_hair": 0.0,
+    },
+    "Genie": {
+        "from_oceania": 0.0,
+        "from_middle_east": 1.0,
+        "has_superpower": 1.0,
+        "is_human": 0.0,  # Magical being
+        "is_comedic": 1.0,
+        "has_famous_catchphrase": 1.0,
+        "has_facial_hair": 0.3,
+    },
+
+    # Спартак vs Александр Великий - Spartacus was slave, Alexander was king
+    "Спартак": {
+        "is_leader": 0.7,  # Led slave revolt
+        "is_wealthy": 0.0,  # Was a slave
+        "from_military": 1.0,
+        "is_villain": 0.0,  # Freedom fighter
+        "era_ancient": 1.0,
+        "from_europe": 1.0,
+    },
+    "Александр Великий": {
+        "is_leader": 1.0,  # Emperor/King
+        "is_wealthy": 1.0,  # Royalty
+        "from_military": 1.0,
+        "is_villain": 0.3,  # Conqueror
+        "era_ancient": 1.0,
+        "from_europe": 0.7,
+        "from_asia": 0.5,  # Conquered East
+    },
+
+    # Волк vs Леопольд - Wolf is troublemaker, Leopold is peaceful
+    "Волк из Ну погоди": {
+        "is_villain": 0.8,
+        "is_comedic": 1.0,
+        "has_famous_catchphrase": 1.0,  # "Ну погоди!"
+        "is_child_friendly": 0.7,
+        "is_adult": 1.0,
+        "from_russia": 1.0,
+    },
+    "Леопольд": {
+        "is_villain": 0.0,
+        "is_comedic": 0.7,
+        "has_famous_catchphrase": 1.0,  # "Ребята, давайте жить дружно!"
+        "is_child_friendly": 1.0,
+        "is_adult": 1.0,
+        "from_russia": 1.0,
+        "is_dark_brooding": 0.0,
+    },
 }
 
 
