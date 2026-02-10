@@ -47,6 +47,19 @@ CREATE TABLE IF NOT EXISTS entity_embeddings (
     entity_id INTEGER PRIMARY KEY REFERENCES entities(id),
     embedding BLOB NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS user_feedback (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    entity_id INTEGER NOT NULL REFERENCES entities(id),
+    attribute_id INTEGER NOT NULL REFERENCES attributes(id),
+    user_answer TEXT NOT NULL,
+    expected_value REAL NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    session_language TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_entity ON user_feedback(entity_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_attribute ON user_feedback(attribute_id);
 """
 
 
@@ -236,6 +249,26 @@ class Repository:
         rows = await cursor.fetchall()
         return [(r[0], r[1]) for r in rows]
 
+    async def get_localized_name(self, entity_id: int, language: str = "en") -> str:
+        """Get entity name in the specified language.
+
+        Tries to find an alias in the requested language first.
+        Falls back to the default entity name if no alias is found.
+        """
+        # Get entity default name
+        entity = await self.get_entity(entity_id)
+        if not entity:
+            return ""
+
+        # Try to find alias in requested language
+        aliases = await self.get_aliases(entity_id)
+        for alias, lang in aliases:
+            if lang == language:
+                return alias
+
+        # Fallback to default name
+        return entity.name
+
     # ---- Embeddings ----
 
     async def set_embedding(self, entity_id: int, embedding: np.ndarray) -> None:
@@ -268,3 +301,126 @@ class Repository:
             r[0]: np.frombuffer(r[1], dtype=np.float32).copy()
             for r in rows
         }
+
+    # ---- User Feedback (Learning) ----
+
+    async def track_feedback(
+        self,
+        entity_id: int,
+        attribute_id: int,
+        user_answer: str,
+        expected_value: float,
+        language: str = "en",
+    ) -> None:
+        """Track user answer for learning purposes."""
+        db = await self._conn()
+        await db.execute(
+            """INSERT INTO user_feedback
+               (entity_id, attribute_id, user_answer, expected_value, session_language)
+               VALUES (?, ?, ?, ?, ?)""",
+            (entity_id, attribute_id, user_answer, expected_value, language),
+        )
+        await db.commit()
+
+    async def get_feedback_stats(
+        self, entity_id: int, attribute_id: int
+    ) -> dict[str, int]:
+        """Get feedback statistics for an entity-attribute pair.
+
+        Returns count of each answer type (YES, NO, PROBABLY_YES, etc.)
+        """
+        db = await self._conn()
+        cursor = await db.execute(
+            """SELECT user_answer, COUNT(*) as count
+               FROM user_feedback
+               WHERE entity_id = ? AND attribute_id = ?
+               GROUP BY user_answer""",
+            (entity_id, attribute_id),
+        )
+        rows = await cursor.fetchall()
+        return {r[0]: r[1] for r in rows}
+
+    async def get_entity_feedback_count(self, entity_id: int) -> int:
+        """Get total number of feedback entries for an entity."""
+        db = await self._conn()
+        cursor = await db.execute(
+            "SELECT COUNT(*) FROM user_feedback WHERE entity_id = ?",
+            (entity_id,),
+        )
+        row = await cursor.fetchone()
+        return row[0] if row else 0
+
+    async def calculate_learned_value(
+        self, entity_id: int, attribute_id: int, current_value: float
+    ) -> float | None:
+        """Calculate new attribute value based on user feedback.
+
+        Returns None if not enough feedback, otherwise returns weighted average.
+        Requires at least 3 feedback samples to update.
+        """
+        stats = await self.get_feedback_stats(entity_id, attribute_id)
+        if not stats:
+            return None
+
+        total = sum(stats.values())
+        if total < 3:  # Need at least 3 samples
+            return None
+
+        # Convert answers to values
+        answer_values = {
+            "YES": 1.0,
+            "PROBABLY_YES": 0.75,
+            "DONT_KNOW": 0.5,
+            "PROBABLY_NO": 0.25,
+            "NO": 0.0,
+        }
+
+        # Calculate weighted average from feedback
+        feedback_sum = 0.0
+        for answer, count in stats.items():
+            feedback_sum += answer_values.get(answer, 0.5) * count
+
+        feedback_avg = feedback_sum / total
+
+        # Blend current value with feedback (70% feedback, 30% current)
+        # This prevents sudden jumps and maintains some stability
+        new_value = 0.7 * feedback_avg + 0.3 * current_value
+
+        return round(new_value, 2)
+
+    async def apply_learning(self, min_feedback_count: int = 3) -> int:
+        """Apply learning from user feedback to entity attributes.
+
+        Updates entity attributes based on accumulated user feedback.
+        Returns number of attributes updated.
+        """
+        db = await self._conn()
+
+        # Get all entity-attribute pairs with enough feedback
+        cursor = await db.execute(
+            """SELECT entity_id, attribute_id, COUNT(*) as feedback_count
+               FROM user_feedback
+               GROUP BY entity_id, attribute_id
+               HAVING feedback_count >= ?""",
+            (min_feedback_count,),
+        )
+        rows = await cursor.fetchall()
+
+        updated_count = 0
+        for entity_id, attribute_id, _ in rows:
+            # Get current value
+            current_value = await self.get_entity_attribute(entity_id, attribute_id)
+            if current_value is None:
+                continue
+
+            # Calculate new value from feedback
+            new_value = await self.calculate_learned_value(
+                entity_id, attribute_id, current_value
+            )
+
+            if new_value is not None and abs(new_value - current_value) > 0.05:
+                # Update if difference is significant (>5%)
+                await self.set_entity_attribute(entity_id, attribute_id, new_value)
+                updated_count += 1
+
+        return updated_count

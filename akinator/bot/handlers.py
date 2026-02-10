@@ -25,7 +25,9 @@ router = Router()
 _session_store: dict[int, GameSession] = {}
 _entities: list[Entity] = []
 _attributes: list[Attribute] = []
-_entity_names: dict[int, str] = {}
+_entity_names: dict[int, str] = {}  # Default names (fallback)
+_entity_names_ru: dict[int, str] = {}  # Russian localized names
+_entity_names_en: dict[int, str] = {}  # English localized names
 _scoring_engine = ScoringEngine()
 _question_policy = QuestionPolicy()
 _session_manager = GameSessionManager(_scoring_engine, _question_policy)
@@ -50,21 +52,47 @@ def get_entity_names(ids: list[int] | None = None) -> dict[int, str]:
     return {eid: _entity_names[eid] for eid in ids if eid in _entity_names}
 
 
+def get_localized_entity_name(entity_id: int, lang: str = "en") -> str:
+    """Get entity name in the specified language."""
+    if lang == "ru" and entity_id in _entity_names_ru:
+        return _entity_names_ru[entity_id]
+    elif lang == "en" and entity_id in _entity_names_en:
+        return _entity_names_en[entity_id]
+    # Fallback to default name
+    return _entity_names.get(entity_id, f"#{entity_id}")
+
+
 def set_repository(repo: Repository) -> None:
     """Called at startup to set the database repository for runtime learning."""
     global _repo
     _repo = repo
 
 
-def set_game_data(entities: list[Entity], attributes: list[Attribute]) -> None:
+async def set_game_data(entities: list[Entity], attributes: list[Attribute], repo: Repository | None = None) -> None:
     """Called at startup to load game data into memory."""
     _entities.clear()
     _entities.extend(entities)
     _attributes.clear()
     _attributes.extend(attributes)
     _entity_names.clear()
+    _entity_names_ru.clear()
+    _entity_names_en.clear()
+
     for e in entities:
         _entity_names[e.id] = e.name
+        # Default: use entity name for both languages
+        _entity_names_en[e.id] = e.name
+        _entity_names_ru[e.id] = e.name
+
+    # Load localized names from aliases if repository is available
+    if repo:
+        for e in entities:
+            aliases = await repo.get_aliases(e.id)
+            for alias, lang in aliases:
+                if lang == "ru":
+                    _entity_names_ru[e.id] = alias
+                elif lang == "en":
+                    _entity_names_en[e.id] = alias
 
 
 def _get_lang(session: GameSession | None, message_or_callback=None) -> str:
@@ -163,11 +191,14 @@ async def handle_top(message: Message) -> None:
         await message.answer("No game in progress. Use /new to start!")
         return
 
-    names = get_entity_names([cid for cid in session.candidate_ids])
+    lang = _get_lang(session)
     top = _scoring_engine.top_k(session, k=TOP_K_DISPLAY)
-    lines = ["Top candidates:"]
+    if lang == "ru":
+        lines = ["Топ кандидатов:"]
+    else:
+        lines = ["Top candidates:"]
     for i, (cid, w) in enumerate(top, 1):
-        name = names.get(cid, f"#{cid}")
+        name = get_localized_entity_name(cid, lang)
         lines.append(f"{i}. **{name}** — {w:.1%}")
     await message.answer("\n".join(lines))
 
@@ -181,17 +212,24 @@ async def handle_why(message: Message) -> None:
         await message.answer("No game in progress. Use /new to start!")
         return
 
-    lines = ["My reasoning:"]
+    lang = _get_lang(session)
+    if lang == "ru":
+        lines = ["Моё рассуждение:"]
+    else:
+        lines = ["My reasoning:"]
+
     for qa in session.history:
         ans_label = qa.answer.value.replace("_", " ")
         lines.append(f"- {qa.question_text} → {ans_label}")
 
-    names = get_entity_names()
     top = _scoring_engine.top_k(session, k=3)
     if top:
         cid, w = top[0]
-        name = names.get(cid, f"#{cid}")
-        lines.append(f"\nTop candidate: **{name}** ({w:.1%})")
+        name = get_localized_entity_name(cid, lang)
+        if lang == "ru":
+            lines.append(f"\nТоп кандидат: **{name}** ({w:.1%})")
+        else:
+            lines.append(f"\nTop candidate: **{name}** ({w:.1%})")
 
     await message.answer("\n".join(lines))
 
@@ -307,7 +345,7 @@ async def handle_answer_callback(callback: CallbackQuery) -> None:
     if _session_manager.should_guess(session):
         session.mode = GameMode.GUESSING
         candidate_id = _session_manager.get_guess_candidate(session)
-        name = _entity_names.get(candidate_id, f"#{candidate_id}")
+        name = get_localized_entity_name(candidate_id, lang)
         _, max_w = _scoring_engine.max_prob(session)
 
         if lang == "ru":
@@ -317,6 +355,42 @@ async def handle_answer_callback(callback: CallbackQuery) -> None:
         await callback.message.edit_text(text, reply_markup=guess_keyboard(lang))
     else:
         await _ask_next_question(callback.message, session)
+
+
+async def _track_session_feedback(
+    session: GameSession, entity_id: int, lang: str
+) -> None:
+    """Track user feedback for all questions asked in this session."""
+    if _repo is None:
+        return
+
+    # Get the entity with attributes
+    entities_with_attrs = [e for e in _entities if e.id == entity_id]
+    if not entities_with_attrs:
+        return
+
+    entity = entities_with_attrs[0]
+    attr_key_to_id = {a.key: a.id for a in _attributes}
+
+    # Track each question/answer pair
+    for qa in session.history:
+        if qa.attribute_key not in attr_key_to_id:
+            continue
+
+        attribute_id = attr_key_to_id[qa.attribute_key]
+        expected_value = entity.attributes.get(qa.attribute_key, 0.5)
+        user_answer = qa.answer.value
+
+        try:
+            await _repo.track_feedback(
+                entity_id=entity_id,
+                attribute_id=attribute_id,
+                user_answer=user_answer,
+                expected_value=expected_value,
+                language=lang,
+            )
+        except Exception as e:
+            logger.warning("Failed to track feedback: %s", e)
 
 
 @router.callback_query(F.data.startswith("guess:"))
@@ -331,6 +405,10 @@ async def handle_guess_callback(callback: CallbackQuery) -> None:
     lang = _get_lang(session)
 
     if action == "correct":
+        # Track feedback for correct guess before finishing
+        guessed_id = _session_manager.get_guess_candidate(session)
+        await _track_session_feedback(session, guessed_id, lang)
+
         _session_manager.handle_guess_response(session, correct=True)
         q_count = session.question_count
         if lang == "ru":
@@ -341,7 +419,7 @@ async def handle_guess_callback(callback: CallbackQuery) -> None:
     else:
         second = _session_manager.handle_guess_response(session, correct=False)
         if session.mode == GameMode.GUESSING and second is not None:
-            name = _entity_names.get(second, f"#{second}")
+            name = get_localized_entity_name(second, lang)
             if lang == "ru":
                 text = f"Тогда может это **{name}**?"
             else:
@@ -449,7 +527,7 @@ async def _ask_next_question(message: Message, session: GameSession) -> None:
         # No more attributes to ask — force guess
         session.mode = GameMode.GUESSING
         candidate_id = _session_manager.get_guess_candidate(session)
-        name = _entity_names.get(candidate_id, f"#{candidate_id}")
+        name = get_localized_entity_name(candidate_id, lang)
         if lang == "ru":
             text = f"У меня закончились вопросы. Это **{name}**?"
         else:
@@ -539,6 +617,13 @@ async def _learn_new_entity(
         )
         _entities.append(new_entity)
         _entity_names[eid] = name
+        # Add to localized name dictionaries
+        if lang == "ru":
+            _entity_names_ru[eid] = name
+            _entity_names_en[eid] = name  # Use same name as fallback for EN
+        else:
+            _entity_names_en[eid] = name
+            _entity_names_ru[eid] = name  # Use same name as fallback for RU
 
         logger.info("Learned new entity: %s (id=%d) with %d attributes", name, eid, len(attrs))
         return True

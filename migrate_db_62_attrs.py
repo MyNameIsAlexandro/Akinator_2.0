@@ -1,8 +1,13 @@
-"""Generate the Akinator SQLite database from categorized entity data.
+"""Migrate database from 32 to 62 attributes.
+
+This script:
+1. Loads all entities from the existing database (32 attrs)
+2. Creates a new database with 62 attributes
+3. Re-applies category templates with all 62 attributes
+4. Preserves entity names, descriptions, types, and overrides
 
 Usage:
-    python -m akinator.generate_db            # Generate data/akinator.db
-    python -m akinator.generate_db --output path/to/db
+    python migrate_db_62_attrs.py
 """
 
 from __future__ import annotations
@@ -10,16 +15,16 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import sys
 
 from akinator.data.categories import TEMPLATES
 from akinator.db.repository import Repository
+from entity_to_category_map import get_category, get_overrides
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-logger = logging.getLogger("generate_db")
+logger = logging.getLogger("migrate")
 
-# ── Attributes (expanded to 62) ──
-ATTRIBUTES = [
+# All 62 attributes in order
+ATTRIBUTES_62 = [
     # Identity
     ("is_fictional", "Этот персонаж вымышленный?", "Is this character fictional?", "identity"),
     ("is_male", "Это мужчина/мужской персонаж?", "Is this a male character?", "identity"),
@@ -68,7 +73,7 @@ ATTRIBUTES = [
     ("era_20th_century", "Из 20-го века?", "From the 20th century?", "era"),
     ("era_21st_century", "Из 21-го века?", "From the 21st century?", "era"),
 
-    # Birth Decades (for real people)
+    # Birth Decades
     ("born_1900s", "Родился в 1900-х?", "Born in 1900s?", "birth_decade"),
     ("born_1910s", "Родился в 1910-х?", "Born in 1910s?", "birth_decade"),
     ("born_1920s", "Родился в 1920-х?", "Born in 1920s?", "birth_decade"),
@@ -96,141 +101,113 @@ ATTRIBUTES = [
 ]
 
 
-def _load_all_entities() -> list[tuple]:
-    """Load entity data from all data modules."""
-    all_entities = []
+async def migrate():
+    """Migrate database from 32 to 62 attributes."""
 
-    try:
-        from akinator.data.fictional import FICTIONAL
-        all_entities.extend(FICTIONAL)
-        logger.info("Loaded %d fictional characters", len(FICTIONAL))
-    except ImportError:
-        logger.warning("akinator.data.fictional not found, skipping")
+    old_db_path = "data/akinator.db"
+    new_db_path = "data/akinator_62.db"
 
-    try:
-        from akinator.data.real_people import REAL_PEOPLE
-        all_entities.extend(REAL_PEOPLE)
-        logger.info("Loaded %d real people", len(REAL_PEOPLE))
-    except ImportError:
-        logger.warning("akinator.data.real_people not found, skipping")
+    # Backup old DB
+    if os.path.exists(old_db_path):
+        import shutil
+        backup_path = "data/akinator_32_backup.db"
+        shutil.copy2(old_db_path, backup_path)
+        logger.info(f"Backed up old DB to {backup_path}")
 
-    return all_entities
+    # Load entities from old DB
+    old_repo = Repository(old_db_path)
+    await old_repo.init_db()
 
+    entities = await old_repo.get_all_entities()
+    all_attrs = await old_repo.get_all_entity_attributes()
 
-def _resolve_attrs(category: str, overrides: dict[str, float] | None) -> dict[str, float]:
-    """Merge category template with entity-specific overrides."""
-    template = TEMPLATES.get(category, {})
-    attrs = dict(template)
-    if overrides:
-        attrs.update(overrides)
-    return attrs
+    logger.info(f"Loaded {len(entities)} entities from old DB")
 
+    # Get entity aliases
+    entity_aliases = {}
+    for entity in entities:
+        aliases = await old_repo.get_aliases(entity.id)
+        entity_aliases[entity.id] = aliases
 
-def _detect_language(name: str) -> str:
-    """Detect if name is Russian (Cyrillic) or English."""
-    for c in name:
-        if "\u0400" <= c <= "\u04ff":
-            return "ru"
-    return "en"
+    await old_repo.close()
 
+    # Create new DB
+    if os.path.exists(new_db_path):
+        os.remove(new_db_path)
 
-def _detect_entity_type(category: str) -> str:
-    """Infer entity type from category."""
-    real_categories = {
-        "politician_modern", "politician_historical", "ruler_ancient", "ruler_medieval",
-        "scientist", "scientist_modern", "tech_leader",
-        "musician_rock", "musician_pop", "musician_hiphop", "musician_classical", "musician_russian",
-        "athlete_football", "athlete_basketball", "athlete_tennis", "athlete_boxing_mma", "athlete_other",
-        "actor_hollywood", "actor_russian", "director",
-        "writer_western", "writer_russian",
-        "visual_artist", "youtuber", "model_influencer",
-    }
-    return "person" if category in real_categories else "character"
+    new_repo = Repository(new_db_path)
+    await new_repo.init_db()
 
-
-async def generate(db_path: str) -> int:
-    """Generate the database. Returns number of entities created."""
-    # Remove old DB if exists
-    if os.path.exists(db_path):
-        os.remove(db_path)
-        logger.info("Removed existing database: %s", db_path)
-
-    os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
-
-    repo = Repository(db_path)
-    await repo.init_db()
-
-    # Insert attributes
-    attr_ids: dict[str, int] = {}
-    for key, q_ru, q_en, cat in ATTRIBUTES:
-        aid = await repo.add_attribute(key, q_ru, q_en, cat)
+    # Add all 62 attributes
+    attr_ids = {}
+    for key, q_ru, q_en, cat in ATTRIBUTES_62:
+        aid = await new_repo.add_attribute(key, q_ru, q_en, cat)
         attr_ids[key] = aid
 
-    logger.info("Created %d attributes", len(attr_ids))
+    logger.info(f"Created {len(attr_ids)} attributes in new DB")
 
-    # Load and insert entities
-    raw_entities = _load_all_entities()
-    logger.info("Total raw entities to process: %d", len(raw_entities))
-
-    seen_names: set[str] = set()
-    count = 0
-
-    for entry in raw_entities:
-        # Parse entry: (name, category, aliases) or (name, category, aliases, overrides)
-        if len(entry) == 3:
-            name, category, aliases = entry
-            overrides = None
-        elif len(entry) == 4:
-            name, category, aliases, overrides = entry
-        else:
-            logger.warning("Skipping malformed entry: %s", entry[:2] if len(entry) >= 2 else entry)
+    # Migrate entities
+    skipped = 0
+    for old_entity in entities:
+        # Get category from mapping
+        category = get_category(old_entity.name)
+        if category is None or category not in TEMPLATES:
+            logger.warning(f"No category mapping for '{old_entity.name}', skipping")
+            skipped += 1
             continue
 
-        # Skip duplicates
-        name_lower = name.lower()
-        if name_lower in seen_names:
-            continue
-        seen_names.add(name_lower)
-
-        # Validate category
-        if category not in TEMPLATES:
-            logger.warning("Unknown category '%s' for entity '%s', skipping", category, name)
-            continue
-
-        lang = _detect_language(name)
-        etype = _detect_entity_type(category)
-        attrs = _resolve_attrs(category, overrides)
-
-        eid = await repo.add_entity(name, f"{category}", etype, lang)
+        # Create entity
+        new_eid = await new_repo.add_entity(
+            old_entity.name,
+            category,
+            old_entity.entity_type,
+            old_entity.language,
+        )
 
         # Add aliases
-        for alias in aliases:
-            alias_lang = _detect_language(alias)
-            await repo.add_alias(eid, alias, alias_lang)
+        for alias_text, alias_lang in entity_aliases.get(old_entity.id, []):
+            await new_repo.add_alias(new_eid, alias_text, alias_lang)
 
-        # Add attributes
-        for attr_key, value in attrs.items():
-            if attr_key in attr_ids:
-                await repo.set_entity_attribute(eid, attr_ids[attr_key], value)
+        # Get full attribute set from template
+        template = TEMPLATES[category]
+        old_attrs = all_attrs.get(old_entity.id, {})
 
-        count += 1
-        if count % 500 == 0:
-            logger.info("  ... processed %d entities", count)
+        # Get entity-specific overrides
+        entity_overrides = get_overrides(old_entity.name) or {}
 
-    logger.info("Generated database with %d entities at %s", count, db_path)
-    await repo.close()
-    return count
+        # Merge: template → old values → entity overrides
+        for attr_key in template.keys():
+            if attr_key not in attr_ids:
+                continue
 
+            # Priority: entity overrides > old values > template
+            if attr_key in entity_overrides:
+                value = entity_overrides[attr_key]
+            else:
+                value = old_attrs.get(attr_key, template[attr_key])
 
-async def main() -> None:
-    db_path = "data/akinator.db"
-    if len(sys.argv) > 2 and sys.argv[1] == "--output":
-        db_path = sys.argv[2]
+            await new_repo.set_entity_attribute(new_eid, attr_ids[attr_key], value)
 
-    count = await generate(db_path)
-    size_mb = os.path.getsize(db_path) / (1024 * 1024)
-    logger.info("Done! %d entities, database size: %.2f MB", count, size_mb)
+        if new_eid % 50 == 0:
+            logger.info(f"  ... migrated {new_eid} entities")
+
+    logger.info(f"Migration complete! New DB at {new_db_path}")
+    logger.info(f"Total entities: {len(entities)}")
+    logger.info(f"Migrated: {len(entities) - skipped}, Skipped: {skipped}")
+
+    # Replace old DB with new one
+    await new_repo.close()
+
+    os.replace(new_db_path, old_db_path)
+    logger.info(f"Replaced {old_db_path} with expanded 62-attribute version")
+
+    # Also update bundled DB
+    bundled_path = "akinator/data/akinator.db"
+    if os.path.exists(bundled_path):
+        import shutil
+        shutil.copy2(old_db_path, bundled_path)
+        logger.info(f"Updated bundled DB at {bundled_path}")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(migrate())

@@ -35,7 +35,7 @@ async def load_game_data(repo: Repository) -> None:
         if entity.id in all_attrs:
             entity.attributes = all_attrs[entity.id]
 
-    set_game_data(entities, attributes)
+    await set_game_data(entities, attributes, repo)
     logger.info("Loaded %d entities, %d attributes", len(entities), len(attributes))
 
 

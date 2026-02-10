@@ -31,14 +31,17 @@ logger = logging.getLogger("wikidata_import")
 SPARQL_URL = "https://query.wikidata.org/sparql"
 USER_AGENT = "AkinatorBot/2.0 (https://github.com/MyNameIsAlexandro/Akinator_2.0)"
 
-# ── Attributes (must match generate_db.py / seed.py) ──
+# ── Attributes (must match generate_db.py - expanded to 62) ──
 ATTRIBUTES = [
+    # Identity
     ("is_fictional", "Этот персонаж вымышленный?", "Is this character fictional?", "identity"),
     ("is_male", "Это мужчина/мужской персонаж?", "Is this a male character?", "identity"),
     ("is_human", "Это человек (или человекоподобный)?", "Is this a human (or humanoid)?", "identity"),
     ("is_alive", "Этот персонаж/человек жив?", "Is this character/person alive?", "identity"),
     ("is_adult", "Это взрослый персонаж?", "Is this an adult character?", "identity"),
     ("is_villain", "Это злодей/антигерой?", "Is this a villain/antagonist?", "identity"),
+
+    # Media
     ("from_movie", "Связан с кино?", "Related to movies?", "media"),
     ("from_tv_series", "Связан с сериалами?", "Related to TV series?", "media"),
     ("from_anime", "Связан с аниме/мангой?", "Related to anime/manga?", "media"),
@@ -50,21 +53,59 @@ ATTRIBUTES = [
     ("from_politics", "Связан с политикой?", "Related to politics?", "media"),
     ("from_science", "Связан с наукой?", "Related to science?", "media"),
     ("from_history", "Историческая личность/персонаж?", "Historical figure/character?", "media"),
+    ("from_literature", "Связан с литературой?", "Related to literature?", "media"),
+    ("from_philosophy", "Связан с философией?", "Related to philosophy?", "media"),
+    ("from_military", "Связан с военным делом?", "Related to military?", "media"),
+    ("from_business", "Связан с бизнесом?", "Related to business?", "media"),
+    ("from_fashion", "Связан с модой?", "Related to fashion?", "media"),
+    ("from_art", "Связан с изобразительным искусством?", "Related to visual arts?", "media"),
+    ("from_religion", "Связан с религией?", "Related to religion?", "media"),
+    ("from_internet", "Интернет-знаменитость?", "Internet celebrity?", "media"),
+
+    # Geography
     ("from_usa", "Связан с США?", "Related to USA?", "geography"),
     ("from_europe", "Связан с Европой?", "Related to Europe?", "geography"),
     ("from_russia", "Связан с Россией?", "Related to Russia?", "geography"),
     ("from_asia", "Связан с Азией?", "Related to Asia?", "geography"),
     ("from_japan", "Связан с Японией?", "Related to Japan?", "geography"),
+    ("from_africa", "Связан с Африкой?", "Related to Africa?", "geography"),
+    ("from_south_america", "Связан с Южной Америкой?", "Related to South America?", "geography"),
+    ("from_middle_east", "Связан с Ближним Востоком?", "Related to Middle East?", "geography"),
+    ("from_oceania", "Связан с Океанией?", "Related to Oceania?", "geography"),
+    ("from_china", "Связан с Китаем?", "Related to China?", "geography"),
+
+    # Era
     ("era_ancient", "Из древности (до 500 н.э.)?", "From ancient times (before 500 AD)?", "era"),
     ("era_medieval", "Из средневековья (500-1500)?", "From medieval era (500-1500)?", "era"),
     ("era_modern", "Из нового времени (1500-1900)?", "From modern era (1500-1900)?", "era"),
     ("era_20th_century", "Из 20-го века?", "From the 20th century?", "era"),
     ("era_21st_century", "Из 21-го века?", "From the 21st century?", "era"),
+
+    # Birth Decades (for real people)
+    ("born_1900s", "Родился в 1900-х?", "Born in 1900s?", "birth_decade"),
+    ("born_1910s", "Родился в 1910-х?", "Born in 1910s?", "birth_decade"),
+    ("born_1920s", "Родился в 1920-х?", "Born in 1920s?", "birth_decade"),
+    ("born_1930s", "Родился в 1930-х?", "Born in 1930s?", "birth_decade"),
+    ("born_1940s", "Родился в 1940-х?", "Born in 1940s?", "birth_decade"),
+    ("born_1950s", "Родился в 1950-х?", "Born in 1950s?", "birth_decade"),
+    ("born_1960s", "Родился в 1960-х?", "Born in 1960s?", "birth_decade"),
+    ("born_1970s", "Родился в 1970-х?", "Born in 1970s?", "birth_decade"),
+    ("born_1980s", "Родился в 1980-х?", "Born in 1980s?", "birth_decade"),
+    ("born_1990s", "Родился в 1990-х или позже?", "Born in 1990s or later?", "birth_decade"),
+
+    # Traits
     ("has_superpower", "Обладает сверхспособностями?", "Has superpowers?", "traits"),
     ("wears_uniform", "Носит униформу/костюм?", "Wears a uniform/costume?", "traits"),
     ("has_famous_catchphrase", "Известен крылатой фразой?", "Known for a famous catchphrase?", "traits"),
     ("is_leader", "Является лидером/главой?", "Is a leader/head?", "traits"),
     ("is_wealthy", "Богатый/знатный?", "Wealthy/noble?", "traits"),
+    ("is_action_hero", "Герой боевика/экшена?", "Action hero?", "traits"),
+    ("is_comedic", "Комедийный персонаж?", "Comedic character?", "traits"),
+    ("is_dark_brooding", "Мрачный/серьёзный персонаж?", "Dark/brooding character?", "traits"),
+    ("is_child_friendly", "Детский персонаж?", "Child-friendly character?", "traits"),
+    ("wears_mask", "Носит маску?", "Wears a mask?", "traits"),
+    ("has_armor", "Носит броню/доспехи?", "Wears armor?", "traits"),
+    ("has_facial_hair", "Имеет бороду/усы?", "Has facial hair?", "traits"),
 ]
 
 # ── SPARQL queries ──
@@ -249,17 +290,34 @@ UNIVERSE_ATTRS: dict[str, dict[str, float]] = {
 }
 
 
-def _sparql_query(query: str) -> list[dict]:
-    """Execute a SPARQL query against Wikidata."""
+def _sparql_query(query: str, max_retries: int = 3) -> list[dict]:
+    """Execute a SPARQL query against Wikidata with retry logic."""
     url = f"{SPARQL_URL}?format=json&query={urllib.parse.quote(query)}"
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
-    try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            data = json.loads(resp.read().decode())
-        return data.get("results", {}).get("bindings", [])
-    except Exception as e:
-        logger.error("SPARQL request failed: %s", e)
-        return []
+
+    for attempt in range(max_retries):
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:  # Reduced timeout from 120 to 60
+                data = json.loads(resp.read().decode())
+            return data.get("results", {}).get("bindings", [])
+        except urllib.error.HTTPError as e:
+            if e.code == 504:  # Gateway Timeout
+                wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                logger.warning("Timeout (504) on attempt %d/%d, retrying in %ds...",
+                             attempt + 1, max_retries, wait_time)
+                if attempt < max_retries - 1:
+                    time.sleep(wait_time)
+                    continue
+            logger.error("SPARQL request failed: HTTP %d - %s", e.code, e.reason)
+            return []
+        except Exception as e:
+            logger.error("SPARQL request failed on attempt %d: %s", attempt + 1, e)
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)
+                continue
+            return []
+
+    return []
 
 
 def _val(row: dict, key: str) -> str | None:
@@ -349,7 +407,7 @@ async def import_people(repo: Repository, attr_ids: dict[str, int],
     logger.info("=" * 60)
 
     count = 0
-    batch = 2000
+    batch = 100  # Reduced from 2000 to avoid timeouts
     # Start with very famous (100+ sitelinks), then widen to less famous
     thresholds = [(100, min(limit, 15000)), (50, min(limit, 30000)),
                   (30, min(limit, 50000)), (15, limit)]
@@ -430,7 +488,7 @@ async def import_fictional(repo: Repository, attr_ids: dict[str, int],
     logger.info("=" * 60)
 
     count = 0
-    batch = 2000
+    batch = 100  # Reduced from 2000 to avoid timeouts
     thresholds = [(30, min(limit, 10000)), (15, min(limit, 25000)),
                   (5, limit)]
 
