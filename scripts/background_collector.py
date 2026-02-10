@@ -610,14 +610,34 @@ async def collect_batch(
         logger.debug("Searching: %s", seed)
         results = search_entities(seed, limit=5)
 
-        # Filter close matches
+        # Filter - only accept EXACT or very close matches
         qids = []
-        seed_lower = seed.lower()
-        for item in results:
+        seed_lower = seed.lower().strip()
+        seed_words = set(seed_lower.split())
+
+        for item in results[:3]:  # Only check first 3 results
             qid = item.get("id", "")
-            label = item.get("label", "").lower()
-            if qid and (seed_lower in label or label in seed_lower):
+            label = item.get("label", "").lower().strip()
+            label_words = set(label.split())
+
+            if not qid:
+                continue
+
+            # Exact match
+            if label == seed_lower:
                 qids.append(qid)
+                break  # Found exact match, stop
+
+            # Same words (handles "Messi Lionel" vs "Lionel Messi")
+            if seed_words == label_words:
+                qids.append(qid)
+                break
+
+            # First result is close enough if it starts the same
+            if len(qids) == 0 and label.startswith(seed_lower.split()[0]):
+                # Check it's not a completely different person (no extra words)
+                if len(label_words - seed_words) <= 1:
+                    qids.append(qid)
 
         if not qids:
             continue
