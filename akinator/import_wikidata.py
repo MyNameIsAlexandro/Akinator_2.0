@@ -520,7 +520,8 @@ async def import_people(repo: Repository, attr_ids: dict[str, int],
     count = 0
     batch = BATCH_SIZE
     thresholds = [(100, min(limit, 15000)), (50, min(limit, 30000)),
-                  (30, min(limit, 50000)), (15, limit)]
+                  (30, min(limit, 50000)), (15, min(limit, 70000)),
+                  (8, limit)]
 
     for min_sl, phase_limit in thresholds:
         if count >= limit:
@@ -634,7 +635,7 @@ async def import_fictional(repo: Repository, attr_ids: dict[str, int],
     count = 0
     batch = BATCH_SIZE
     thresholds = [(30, min(limit, 10000)), (15, min(limit, 25000)),
-                  (5, limit)]
+                  (5, min(limit, 40000)), (3, limit)]
 
     for min_sl, phase_limit in thresholds:
         if count >= limit:
