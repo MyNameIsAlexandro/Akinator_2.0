@@ -40,9 +40,9 @@ async def load_game_data(repo: Repository) -> None:
 
 
 def _ensure_database() -> None:
-    """Copy bundled DB from repo if runtime DB doesn't exist."""
+    """Always copy bundled DB from repo to ensure latest data."""
     os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
-    if not os.path.exists(DB_PATH) and os.path.exists(BUNDLED_DB):
+    if os.path.exists(BUNDLED_DB):
         shutil.copy2(BUNDLED_DB, DB_PATH)
         logger.info("Copied bundled database to %s", DB_PATH)
 

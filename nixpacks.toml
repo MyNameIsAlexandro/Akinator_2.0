@@ -1,2 +1,2 @@
 [start]
-cmd = "python -m akinator.seed && python -m akinator"
+cmd = "python -m akinator"

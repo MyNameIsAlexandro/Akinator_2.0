@@ -4,6 +4,6 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "python -m akinator.seed && python -m akinator"
+    "startCommand": "python -m akinator"
   }
 }
