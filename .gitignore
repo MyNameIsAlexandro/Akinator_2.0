@@ -8,5 +8,7 @@ build/
 .coverage
 htmlcov/
 /data/
+/logs/*.log
 *.bin
 .env
+.DS_Store
