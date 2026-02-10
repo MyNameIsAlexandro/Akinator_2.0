@@ -310,6 +310,25 @@ async def handle_hint_callback(callback: CallbackQuery) -> None:
         await callback.answer()
 
 
+def _answer_label(answer: Answer, lang: str) -> str:
+    """Get localized label for answer."""
+    labels_ru = {
+        Answer.YES: "Да",
+        Answer.NO: "Нет",
+        Answer.PROBABLY_YES: "Скорее да",
+        Answer.PROBABLY_NO: "Скорее нет",
+        Answer.DONT_KNOW: "Не знаю",
+    }
+    labels_en = {
+        Answer.YES: "Yes",
+        Answer.NO: "No",
+        Answer.PROBABLY_YES: "Probably yes",
+        Answer.PROBABLY_NO: "Probably no",
+        Answer.DONT_KNOW: "Don't know",
+    }
+    return labels_ru.get(answer, "?") if lang == "ru" else labels_en.get(answer, "?")
+
+
 @router.callback_query(F.data.startswith("answer:"))
 async def handle_answer_callback(callback: CallbackQuery) -> None:
     if await _handle_stale_session(callback):
@@ -338,6 +357,16 @@ async def handle_answer_callback(callback: CallbackQuery) -> None:
         # Remove from asked (process_answer will re-add)
         session.asked_attributes.pop()
         _session_manager.process_answer(session, _entities, attr, answer)
+
+        # Show selected answer by editing the message
+        q_text = _attr_question(attr, lang)
+        answer_label = _answer_label(answer, lang)
+        q_num = session.question_count
+        if lang == "ru":
+            marked_text = f"Вопрос {q_num}/20:\n{q_text}\n\n✓ Ваш ответ: **{answer_label}**"
+        else:
+            marked_text = f"Question {q_num}/20:\n{q_text}\n\n✓ Your answer: **{answer_label}**"
+        await callback.message.edit_text(marked_text)
 
     await callback.answer()
 
