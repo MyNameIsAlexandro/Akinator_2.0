@@ -52,3 +52,61 @@
 - **Successful**: 203/203
 - **Avg Questions**: 12.38
 
+
+## Run: 2026-02-10 12:23:57
+- **Entities**: 203
+- **Accuracy**: 100.00%
+- **Successful**: 203/203
+- **Avg Questions**: 12.38
+
+
+## Run: 2026-02-10 15:04:31
+- **Entities**: 203
+- **Accuracy**: 99.51%
+- **Successful**: 202/203
+- **Avg Questions**: 13.26
+
+
+## Realistic User Run: 2026-02-10 15:07:37
+- **Entities**: 203
+- **Accuracy**: 99.01%
+- **Strategy**: Realistic (more PROBABLY/DONT_KNOW)
+
+
+## Pessimistic User Run: 2026-02-10 15:07:45
+- **Entities**: 203
+- **Accuracy**: 96.55%
+- **Strategy**: Pessimistic (lots of DONT_KNOW)
+
+
+## Run: 2026-02-10 15:12:56
+- **Entities**: 203
+- **Accuracy**: 99.51%
+- **Successful**: 202/203
+- **Avg Questions**: 12.55
+
+
+## Pessimistic User Run: 2026-02-10 15:13:50
+- **Entities**: 203
+- **Accuracy**: 99.51%
+- **Strategy**: Pessimistic (lots of DONT_KNOW)
+
+
+## Run: 2026-02-10 15:14:42
+- **Entities**: 203
+- **Accuracy**: 100.00%
+- **Successful**: 203/203
+- **Avg Questions**: 12.57
+
+
+## Realistic User Run: 2026-02-10 15:14:49
+- **Entities**: 203
+- **Accuracy**: 99.51%
+- **Strategy**: Realistic (more PROBABLY/DONT_KNOW)
+
+
+## Pessimistic User Run: 2026-02-10 15:14:58
+- **Entities**: 203
+- **Accuracy**: 100.00%
+- **Strategy**: Pessimistic (lots of DONT_KNOW)
+
