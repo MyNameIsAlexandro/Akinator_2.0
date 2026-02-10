@@ -35,6 +35,47 @@ EXCLUSIVE_GROUPS: list[list[str]] = [
     ["from_usa", "from_europe", "from_russia", "from_asia", "from_japan"],
 ]
 
+# Conditional exclusions: when an attribute is confirmed ("yes") or denied ("no"),
+# skip asking certain other attributes that become logically irrelevant.
+CONDITIONAL_EXCLUSIONS: dict[tuple[str, str], list[str]] = {
+    # Real person (is_fictional denied) → skip anime/comics/game/superpower
+    ("is_fictional", "no"): [
+        "from_anime", "from_comics", "from_game", "has_superpower",
+    ],
+    # Fictional character (is_fictional confirmed) → skip politics/science/sport
+    ("is_fictional", "yes"): [
+        "from_politics", "from_science", "from_sport",
+    ],
+    # Politician → skip anime/comics/game/superpower
+    ("from_politics", "yes"): [
+        "from_anime", "from_comics", "from_game", "has_superpower",
+    ],
+    # Musician → skip anime/comics/game/sport/politics
+    ("from_music", "yes"): [
+        "from_anime", "from_comics", "from_game", "from_sport", "from_politics",
+    ],
+    # Sportsperson → skip anime/comics/game
+    ("from_sport", "yes"): [
+        "from_anime", "from_comics", "from_game",
+    ],
+    # Anime character → skip politics/science/sport
+    ("from_anime", "yes"): [
+        "from_politics", "from_science", "from_sport",
+    ],
+    # Comics character → skip politics/science/sport
+    ("from_comics", "yes"): [
+        "from_politics", "from_science", "from_sport",
+    ],
+    # Game character → skip politics/science/sport
+    ("from_game", "yes"): [
+        "from_politics", "from_science", "from_sport",
+    ],
+    # Scientist → skip anime/comics/game/superpower
+    ("from_science", "yes"): [
+        "from_anime", "from_comics", "from_game", "has_superpower",
+    ],
+}
+
 # LLM attribute merge weights
 LLM_QA_WEIGHT = 0.3
 LLM_KNOWLEDGE_WEIGHT = 0.7
