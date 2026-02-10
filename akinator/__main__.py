@@ -41,10 +41,23 @@ async def load_game_data(repo: Repository) -> None:
 
 def _ensure_database() -> None:
     """Always copy bundled DB from repo to ensure latest data."""
+    logger.info("DB_PATH: %s", DB_PATH)
+    logger.info("BUNDLED_DB: %s", BUNDLED_DB)
+    logger.info("BUNDLED_DB exists: %s", os.path.exists(BUNDLED_DB))
+
     os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
     if os.path.exists(BUNDLED_DB):
+        # Get bundled DB info before copy
+        import sqlite3
+        with sqlite3.connect(BUNDLED_DB) as conn:
+            attr_count = conn.execute("SELECT COUNT(*) FROM attributes").fetchone()[0]
+            entity_count = conn.execute("SELECT COUNT(*) FROM entities").fetchone()[0]
+        logger.info("Bundled DB: %d entities, %d attributes", entity_count, attr_count)
+
         shutil.copy2(BUNDLED_DB, DB_PATH)
         logger.info("Copied bundled database to %s", DB_PATH)
+    else:
+        logger.error("BUNDLED_DB not found at %s!", BUNDLED_DB)
 
 
 async def main() -> None:
