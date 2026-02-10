@@ -36,6 +36,7 @@ jobs:
       run: |
         if [ ! -f "data/akinator.db" ]; then
           echo "❌ Database not found! Copying from bundled DB..."
+          mkdir -p data
           cp akinator/data/akinator.db data/akinator.db
         fi
         echo "✅ Database verified"
