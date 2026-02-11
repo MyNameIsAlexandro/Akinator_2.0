@@ -52,6 +52,24 @@ async def _ensure_database(backup: GitHubBackup | None) -> None:
     logger.info("CWD: %s", os.getcwd())
     logger.info("__file__: %s", __file__)
 
+    # FORCE UPGRADE: Always use bundled DB if it has significantly more entities
+    # This ensures the 20K database is used instead of old 203 entity DB
+    import sqlite3
+    if os.path.exists(BUNDLED_DB):
+        try:
+            with sqlite3.connect(BUNDLED_DB) as conn:
+                bundled_count = conn.execute("SELECT COUNT(*) FROM entities").fetchone()[0]
+            logger.info("Bundled DB has %d entities", bundled_count)
+
+            # If bundled has 1000+ entities, ALWAYS use it (one-time migration)
+            if bundled_count >= 1000:
+                os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
+                shutil.copy2(BUNDLED_DB, DB_PATH)
+                logger.info("FORCED copy of bundled DB with %d entities to %s", bundled_count, DB_PATH)
+                return
+        except Exception as e:
+            logger.warning("Error checking bundled DB: %s", e)
+
     os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
 
     # Check if bundled DB has more entities than existing (upgrade scenario)
