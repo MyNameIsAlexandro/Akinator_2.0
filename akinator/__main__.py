@@ -49,6 +49,24 @@ async def _ensure_database(backup: GitHubBackup | None) -> None:
     logger.info("BUNDLED_DB exists: %s", os.path.exists(BUNDLED_DB))
 
     os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
+
+    # Check if bundled DB has more entities than existing (upgrade scenario)
+    import sqlite3
+    if os.path.exists(DB_PATH) and os.path.exists(BUNDLED_DB):
+        try:
+            with sqlite3.connect(DB_PATH) as conn:
+                existing_count = conn.execute("SELECT COUNT(*) FROM entities").fetchone()[0]
+            with sqlite3.connect(BUNDLED_DB) as conn:
+                bundled_count = conn.execute("SELECT COUNT(*) FROM entities").fetchone()[0]
+
+            if bundled_count > existing_count:
+                logger.info("Bundled DB has more entities (%d vs %d) — upgrading!", bundled_count, existing_count)
+                shutil.copy2(BUNDLED_DB, DB_PATH)
+                logger.info("Upgraded database to %d entities", bundled_count)
+                return
+        except Exception as e:
+            logger.warning("Could not compare DBs: %s", e)
+
     if os.path.exists(DB_PATH):
         size_mb = os.path.getsize(DB_PATH) / (1024 * 1024)
         logger.info("Using existing database: %s (%.1f MB)", DB_PATH, size_mb)
