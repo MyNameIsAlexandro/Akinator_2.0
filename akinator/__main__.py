@@ -44,14 +44,19 @@ async def load_game_data(repo: Repository) -> None:
 
 async def _ensure_database(backup: GitHubBackup | None) -> None:
     """Restore DB: try GitHub backup first, then fall back to bundled DB."""
+    logger.info("=== DATABASE INIT ===")
     logger.info("DB_PATH: %s", DB_PATH)
+    logger.info("DB_PATH exists: %s", os.path.exists(DB_PATH))
     logger.info("BUNDLED_DB: %s", BUNDLED_DB)
     logger.info("BUNDLED_DB exists: %s", os.path.exists(BUNDLED_DB))
+    logger.info("CWD: %s", os.getcwd())
+    logger.info("__file__: %s", __file__)
 
     os.makedirs(os.path.dirname(DB_PATH) or ".", exist_ok=True)
 
     # Check if bundled DB has more entities than existing (upgrade scenario)
     import sqlite3
+    logger.info("Checking for DB upgrade...")
     if os.path.exists(DB_PATH) and os.path.exists(BUNDLED_DB):
         try:
             with sqlite3.connect(DB_PATH) as conn:
@@ -59,13 +64,20 @@ async def _ensure_database(backup: GitHubBackup | None) -> None:
             with sqlite3.connect(BUNDLED_DB) as conn:
                 bundled_count = conn.execute("SELECT COUNT(*) FROM entities").fetchone()[0]
 
+            logger.info("Existing DB: %d entities, Bundled DB: %d entities", existing_count, bundled_count)
+
             if bundled_count > existing_count:
                 logger.info("Bundled DB has more entities (%d vs %d) — upgrading!", bundled_count, existing_count)
                 shutil.copy2(BUNDLED_DB, DB_PATH)
                 logger.info("Upgraded database to %d entities", bundled_count)
                 return
+            else:
+                logger.info("No upgrade needed (existing >= bundled)")
         except Exception as e:
             logger.warning("Could not compare DBs: %s", e)
+    else:
+        logger.info("Skip upgrade check: DB_PATH exists=%s, BUNDLED_DB exists=%s",
+                   os.path.exists(DB_PATH), os.path.exists(BUNDLED_DB))
 
     if os.path.exists(DB_PATH):
         size_mb = os.path.getsize(DB_PATH) / (1024 * 1024)
