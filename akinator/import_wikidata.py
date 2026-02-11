@@ -31,6 +31,9 @@ logger = logging.getLogger("wikidata_import")
 SPARQL_URL = "https://query.wikidata.org/sparql"
 USER_AGENT = "AkinatorBot/2.0 (https://github.com/MyNameIsAlexandro/Akinator_2.0)"
 
+BATCH_SIZE = 400  # Items per SPARQL query (reduced from 2000)
+RETRY_DELAYS = [5, 15, 30]  # Exponential backoff delays in seconds (3 retries)
+
 # ── Attributes (must match generate_db.py - expanded to 62) ──
 ATTRIBUTES = [
     # Identity
@@ -109,48 +112,84 @@ ATTRIBUTES = [
 ]
 
 # ── SPARQL queries ──
-# Each query fetches entity + label in EN and RU + key properties
+# Lightweight: no GROUP_CONCAT, uses SERVICE wikibase:label
 
-QUERY_PEOPLE = """
-SELECT DISTINCT ?item ?enLabel ?ruLabel ?genderLabel
-       ?countryLabel ?birthYear ?deathYear
-       (GROUP_CONCAT(DISTINCT ?occupationLabel; SEPARATOR="|") AS ?occupations)
-WHERE {{
+QUERY_PEOPLE_IDS = """
+SELECT ?item ?itemLabel ?ruLabel WHERE {{
   ?item wdt:P31 wd:Q5 .
   ?item wikibase:sitelinks ?sitelinks .
+  hint:Prior hint:rangeSafe true .
   FILTER(?sitelinks > {min_sitelinks})
-  OPTIONAL {{ ?item rdfs:label ?enLabel . FILTER(LANG(?enLabel) = "en") }}
   OPTIONAL {{ ?item rdfs:label ?ruLabel . FILTER(LANG(?ruLabel) = "ru") }}
-  OPTIONAL {{ ?item wdt:P21 ?gender . ?gender rdfs:label ?genderLabel . FILTER(LANG(?genderLabel) = "en") }}
-  OPTIONAL {{ ?item wdt:P27 ?country . ?country rdfs:label ?countryLabel . FILTER(LANG(?countryLabel) = "en") }}
-  OPTIONAL {{ ?item wdt:P569 ?birth . BIND(YEAR(?birth) AS ?birthYear) }}
-  OPTIONAL {{ ?item wdt:P570 ?death . BIND(YEAR(?death) AS ?deathYear) }}
-  OPTIONAL {{ ?item wdt:P106 ?occupation . ?occupation rdfs:label ?occupationLabel . FILTER(LANG(?occupationLabel) = "en") }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
 }}
-GROUP BY ?item ?enLabel ?ruLabel ?genderLabel ?countryLabel ?birthYear ?deathYear
 LIMIT {limit}
 OFFSET {offset}
 """
 
-QUERY_FICTIONAL = """
-SELECT DISTINCT ?item ?enLabel ?ruLabel ?genderLabel
-       (GROUP_CONCAT(DISTINCT ?universeLabel; SEPARATOR="|") AS ?universes)
-       (GROUP_CONCAT(DISTINCT ?mediaLabel; SEPARATOR="|") AS ?medias)
-WHERE {{
+QUERY_FICTIONAL_IDS = """
+SELECT ?item ?itemLabel ?ruLabel WHERE {{
   {{ ?item wdt:P31/wdt:P279* wd:Q95074 . }}
   UNION
   {{ ?item wdt:P31/wdt:P279* wd:Q15632617 . }}
   ?item wikibase:sitelinks ?sitelinks .
+  hint:Prior hint:rangeSafe true .
   FILTER(?sitelinks > {min_sitelinks})
-  OPTIONAL {{ ?item rdfs:label ?enLabel . FILTER(LANG(?enLabel) = "en") }}
   OPTIONAL {{ ?item rdfs:label ?ruLabel . FILTER(LANG(?ruLabel) = "ru") }}
-  OPTIONAL {{ ?item wdt:P21 ?gender . ?gender rdfs:label ?genderLabel . FILTER(LANG(?genderLabel) = "en") }}
-  OPTIONAL {{ ?item wdt:P1080 ?universe . ?universe rdfs:label ?universeLabel . FILTER(LANG(?universeLabel) = "en") }}
-  OPTIONAL {{ ?item wdt:P449 ?media . ?media rdfs:label ?mediaLabel . FILTER(LANG(?mediaLabel) = "en") }}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
 }}
-GROUP BY ?item ?enLabel ?ruLabel ?genderLabel
 LIMIT {limit}
 OFFSET {offset}
+"""
+
+# Separate lightweight property queries (batched via VALUES)
+
+QUERY_GENDER = """
+SELECT ?item ?genderLabel WHERE {{
+  VALUES ?item {{ {values} }}
+  ?item wdt:P21 ?gender .
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+}}
+"""
+
+QUERY_BIRTH_DEATH = """
+SELECT ?item ?birthYear ?deathYear WHERE {{
+  VALUES ?item {{ {values} }}
+  OPTIONAL {{ ?item wdt:P569 ?birth . BIND(YEAR(?birth) AS ?birthYear) }}
+  OPTIONAL {{ ?item wdt:P570 ?death . BIND(YEAR(?death) AS ?deathYear) }}
+}}
+"""
+
+QUERY_COUNTRY = """
+SELECT ?item ?countryLabel WHERE {{
+  VALUES ?item {{ {values} }}
+  ?item wdt:P27 ?country .
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+}}
+"""
+
+QUERY_OCCUPATIONS = """
+SELECT ?item ?occupationLabel WHERE {{
+  VALUES ?item {{ {values} }}
+  ?item wdt:P106 ?occupation .
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+}}
+"""
+
+QUERY_UNIVERSE = """
+SELECT ?item ?universeLabel WHERE {{
+  VALUES ?item {{ {values} }}
+  ?item wdt:P1080 ?universe .
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+}}
+"""
+
+QUERY_MEDIA = """
+SELECT ?item ?mediaLabel WHERE {{
+  VALUES ?item {{ {values} }}
+  ?item wdt:P449 ?media .
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en" . }}
+}}
 """
 
 # ── Mapping tables ──
@@ -269,55 +308,116 @@ COUNTRY_ATTRS: dict[str, dict[str, float]] = {
 }
 
 UNIVERSE_ATTRS: dict[str, dict[str, float]] = {
-    "marvel": {"from_comics": 1.0, "from_movie": 0.8, "from_usa": 1.0, "has_superpower": 0.8, "wears_uniform": 0.8},
-    "dc": {"from_comics": 1.0, "from_movie": 0.7, "from_usa": 1.0, "has_superpower": 0.8, "wears_uniform": 0.8},
-    "star wars": {"from_movie": 1.0, "from_usa": 1.0},
+    "marvel": {"from_comics": 1.0, "from_movie": 0.8, "from_usa": 1.0, "has_superpower": 0.8, "wears_uniform": 0.8, "era_21st_century": 0.7},
+    "dc": {"from_comics": 1.0, "from_movie": 0.7, "from_usa": 1.0, "has_superpower": 0.8, "wears_uniform": 0.8, "era_21st_century": 0.7},
+    "star wars": {"from_movie": 1.0, "from_usa": 1.0, "has_superpower": 0.5},
     "middle-earth": {"from_book": 1.0, "from_movie": 1.0, "from_europe": 0.7, "era_medieval": 0.5},
-    "wizarding world": {"from_book": 1.0, "from_movie": 1.0, "from_europe": 1.0, "has_superpower": 0.9},
-    "harry potter": {"from_book": 1.0, "from_movie": 1.0, "from_europe": 1.0, "has_superpower": 0.9},
-    "dragon ball": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 1.0},
-    "naruto": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.8},
-    "one piece": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.7},
-    "pokémon": {"from_anime": 1.0, "from_game": 1.0, "from_japan": 1.0, "from_asia": 1.0},
-    "disney": {"from_movie": 1.0, "from_usa": 1.0},
-    "simpsons": {"from_tv_series": 1.0, "from_usa": 1.0},
-    "game of thrones": {"from_tv_series": 1.0, "from_book": 1.0, "era_medieval": 0.8},
-    "sonic": {"from_game": 1.0, "from_japan": 1.0, "has_superpower": 0.7},
-    "super mario": {"from_game": 1.0, "from_japan": 1.0},
+    "wizarding world": {"from_book": 1.0, "from_movie": 1.0, "from_europe": 1.0, "has_superpower": 0.9, "era_21st_century": 0.8},
+    "harry potter": {"from_book": 1.0, "from_movie": 1.0, "from_europe": 1.0, "has_superpower": 0.9, "era_21st_century": 0.8},
+    "dragon ball": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 1.0, "era_21st_century": 0.6},
+    "naruto": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.8, "era_21st_century": 0.7},
+    "one piece": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.7, "era_21st_century": 0.7},
+    "pokémon": {"from_anime": 1.0, "from_game": 1.0, "from_japan": 1.0, "from_asia": 1.0, "is_human": 0.3, "era_21st_century": 0.7},
+    "disney": {"from_movie": 1.0, "from_usa": 1.0, "era_21st_century": 0.6},
+    "simpsons": {"from_tv_series": 1.0, "from_usa": 1.0, "era_21st_century": 0.8},
+    "game of thrones": {"from_tv_series": 1.0, "from_book": 1.0, "era_medieval": 0.8, "from_europe": 0.7},
+    "sonic": {"from_game": 1.0, "from_japan": 1.0, "has_superpower": 0.7, "is_human": 0.0},
+    "super mario": {"from_game": 1.0, "from_japan": 1.0, "is_human": 0.8},
     "zelda": {"from_game": 1.0, "from_japan": 1.0},
     "final fantasy": {"from_game": 1.0, "from_japan": 1.0},
     "street fighter": {"from_game": 1.0, "from_japan": 1.0},
+    "transformers": {"from_movie": 1.0, "from_usa": 1.0, "is_human": 0.0, "has_superpower": 0.7},
+    "shrek": {"from_movie": 1.0, "from_usa": 1.0, "is_human": 0.3},
+    "spongebob": {"from_tv_series": 1.0, "from_usa": 1.0, "is_human": 0.0},
+    "south park": {"from_tv_series": 1.0, "from_usa": 1.0, "era_21st_century": 0.9},
+    "family guy": {"from_tv_series": 1.0, "from_usa": 1.0, "era_21st_century": 0.8},
+    "rick and morty": {"from_tv_series": 1.0, "from_usa": 1.0, "era_21st_century": 1.0},
+    "sherlock holmes": {"from_book": 1.0, "from_europe": 1.0, "era_modern": 0.8, "is_human": 1.0},
+    "breaking bad": {"from_tv_series": 1.0, "from_usa": 1.0, "era_21st_century": 1.0, "is_human": 1.0},
+    "stranger things": {"from_tv_series": 1.0, "from_usa": 1.0, "era_20th_century": 0.8, "has_superpower": 0.5},
+    "demon slayer": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.8},
+    "attack on titan": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.6, "from_europe": 0.5},
+    "jojo": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 1.0},
+    "death note": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.8},
+    "hunter": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.7},
+    "bleach": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 0.9},
+    "my hero academia": {"from_anime": 1.0, "from_japan": 1.0, "from_asia": 1.0, "has_superpower": 1.0},
+    "mortal kombat": {"from_game": 1.0, "from_usa": 1.0, "has_superpower": 0.7},
+    "resident evil": {"from_game": 1.0, "from_japan": 1.0},
+    "witcher": {"from_game": 1.0, "from_book": 1.0, "from_europe": 1.0, "era_medieval": 0.7, "has_superpower": 0.6},
+    "minecraft": {"from_game": 1.0},
+    "overwatch": {"from_game": 1.0, "from_usa": 0.5, "has_superpower": 0.5, "wears_uniform": 0.8},
+    "genshin": {"from_game": 1.0, "from_asia": 1.0, "has_superpower": 0.8},
+}
+
+# Fictional character occupation → attribute mappings
+FICTIONAL_OCCUPATION_ATTRS: dict[str, dict[str, float]] = {
+    "villain": {"is_villain": 1.0},
+    "antagonist": {"is_villain": 0.9},
+    "supervillain": {"is_villain": 1.0, "has_superpower": 0.9},
+    "superhero": {"is_villain": 0.0, "has_superpower": 0.9, "wears_uniform": 0.8},
+    "hero": {"is_villain": 0.0},
+    "king": {"is_leader": 1.0, "is_wealthy": 0.9},
+    "queen": {"is_leader": 1.0, "is_wealthy": 0.9, "is_male": 0.0},
+    "prince": {"is_wealthy": 0.8, "is_leader": 0.5},
+    "princess": {"is_wealthy": 0.8, "is_leader": 0.5, "is_male": 0.0},
+    "pirate": {"is_villain": 0.5, "wears_uniform": 0.5},
+    "knight": {"wears_uniform": 1.0, "is_leader": 0.4},
+    "soldier": {"wears_uniform": 1.0},
+    "warrior": {"wears_uniform": 0.6},
+    "wizard": {"has_superpower": 0.9},
+    "witch": {"has_superpower": 0.9, "is_male": 0.0},
+    "detective": {"is_human": 1.0},
+    "robot": {"is_human": 0.0},
+    "android": {"is_human": 0.1},
+    "cyborg": {"is_human": 0.5, "has_superpower": 0.6},
+    "alien": {"is_human": 0.0},
+    "god": {"has_superpower": 1.0, "is_leader": 0.7, "is_human": 0.3},
+    "deity": {"has_superpower": 1.0, "is_leader": 0.7, "is_human": 0.3},
+    "demon": {"has_superpower": 0.8, "is_villain": 0.7, "is_human": 0.0},
+    "vampire": {"has_superpower": 0.7, "is_human": 0.3},
+    "monster": {"is_human": 0.0, "is_villain": 0.5},
+    "ninja": {"has_superpower": 0.4, "wears_uniform": 0.7, "from_asia": 0.7},
+    "spy": {"is_human": 1.0},
+    "thief": {"is_villain": 0.5},
+    "assassin": {"is_villain": 0.6},
+    "scientist": {"from_science": 0.7, "is_human": 1.0},
+    "doctor": {"is_human": 1.0},
 }
 
 
-def _sparql_query(query: str, max_retries: int = 3) -> list[dict]:
-    """Execute a SPARQL query against Wikidata with retry logic."""
+# ── Helpers ──
+
+def _qid(uri: str) -> str:
+    """Extract QID from Wikidata URI, e.g. 'http://www.wikidata.org/entity/Q42' -> 'Q42'."""
+    return uri.rsplit("/", 1)[-1]
+
+
+def _values_clause(qids: list[str]) -> str:
+    """Build SPARQL VALUES clause content: 'wd:Q42 wd:Q76 ...'."""
+    return " ".join(f"wd:{qid}" for qid in qids)
+
+
+def _sparql_query(query: str) -> list[dict]:
+    """Execute a SPARQL query with retry and exponential backoff."""
     url = f"{SPARQL_URL}?format=json&query={urllib.parse.quote(query)}"
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, "Accept": "application/json"})
 
-    for attempt in range(max_retries):
+    max_attempts = len(RETRY_DELAYS) + 1
+    for attempt in range(max_attempts):
         try:
-            with urllib.request.urlopen(req, timeout=60) as resp:  # Reduced timeout from 120 to 60
+            with urllib.request.urlopen(req, timeout=120) as resp:
                 data = json.loads(resp.read().decode())
             return data.get("results", {}).get("bindings", [])
-        except urllib.error.HTTPError as e:
-            if e.code == 504:  # Gateway Timeout
-                wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
-                logger.warning("Timeout (504) on attempt %d/%d, retrying in %ds...",
-                             attempt + 1, max_retries, wait_time)
-                if attempt < max_retries - 1:
-                    time.sleep(wait_time)
-                    continue
-            logger.error("SPARQL request failed: HTTP %d - %s", e.code, e.reason)
-            return []
         except Exception as e:
-            logger.error("SPARQL request failed on attempt %d: %s", attempt + 1, e)
-            if attempt < max_retries - 1:
-                time.sleep(2 ** attempt)
-                continue
-            return []
-
-    return []
+            if attempt < len(RETRY_DELAYS):
+                delay = RETRY_DELAYS[attempt]
+                logger.warning("SPARQL attempt %d/%d failed: %s. Retrying in %ds...",
+                               attempt + 1, max_attempts, e, delay)
+                time.sleep(delay)
+            else:
+                logger.error("SPARQL query failed after %d attempts: %s", max_attempts, e)
+                return []
 
 
 def _val(row: dict, key: str) -> str | None:
@@ -333,6 +433,58 @@ def _int_val(row: dict, key: str) -> int | None:
         return int(float(v))
     except (ValueError, TypeError):
         return None
+
+
+def _fetch_property(query_template: str, qids: list[str], key: str) -> dict[str, list[str]]:
+    """Fetch a multi-value property for a batch of QIDs. Returns {qid: [values]}."""
+    if not qids:
+        return {}
+    values = _values_clause(qids)
+    rows = _sparql_query(query_template.format(values=values))
+    result: dict[str, list[str]] = {}
+    for row in rows:
+        item = _val(row, "item")
+        val = _val(row, key)
+        if item and val:
+            qid = _qid(item)
+            result.setdefault(qid, []).append(val)
+    time.sleep(1)
+    return result
+
+
+def _fetch_single_property(query_template: str, qids: list[str], key: str) -> dict[str, str]:
+    """Fetch a single-value property for a batch of QIDs. Returns {qid: first_value}."""
+    if not qids:
+        return {}
+    values = _values_clause(qids)
+    rows = _sparql_query(query_template.format(values=values))
+    result: dict[str, str] = {}
+    for row in rows:
+        item = _val(row, "item")
+        val = _val(row, key)
+        if item and val:
+            qid = _qid(item)
+            if qid not in result:
+                result[qid] = val
+    time.sleep(1)
+    return result
+
+
+def _fetch_birth_death(qids: list[str]) -> dict[str, tuple[int | None, int | None]]:
+    """Fetch birth and death years for a batch of QIDs."""
+    if not qids:
+        return {}
+    values = _values_clause(qids)
+    rows = _sparql_query(QUERY_BIRTH_DEATH.format(values=values))
+    result: dict[str, tuple[int | None, int | None]] = {}
+    for row in rows:
+        item = _val(row, "item")
+        if item:
+            qid = _qid(item)
+            if qid not in result:
+                result[qid] = (_int_val(row, "birthYear"), _int_val(row, "deathYear"))
+    time.sleep(1)
+    return result
 
 
 def _era_attrs(birth: int | None, death: int | None) -> dict[str, float]:
@@ -407,10 +559,11 @@ async def import_people(repo: Repository, attr_ids: dict[str, int],
     logger.info("=" * 60)
 
     count = 0
-    batch = 100  # Reduced from 2000 to avoid timeouts
+    batch = BATCH_SIZE
     # Start with very famous (100+ sitelinks), then widen to less famous
     thresholds = [(100, min(limit, 15000)), (50, min(limit, 30000)),
-                  (30, min(limit, 50000)), (15, limit)]
+                  (30, min(limit, 50000)), (15, min(limit, 70000)),
+                  (8, limit)]
 
     for min_sl, phase_limit in thresholds:
         if count >= limit:
@@ -421,42 +574,79 @@ async def import_people(repo: Repository, attr_ids: dict[str, int],
             if count >= limit:
                 break
 
-            query = QUERY_PEOPLE.format(min_sitelinks=min_sl, limit=batch, offset=offset)
+            # Step 1: Fetch IDs and labels (lightweight, no properties)
+            query = QUERY_PEOPLE_IDS.format(min_sitelinks=min_sl, limit=batch, offset=offset)
             rows = _sparql_query(query)
             if not rows:
                 logger.info("  No more results at offset %d", offset)
                 break
 
-            new_in_batch = 0
+            # Parse entities, deduplicate by QID
+            entities: dict[str, dict] = {}
             for row in rows:
-                en_name = _val(row, "enLabel")
+                item = _val(row, "item")
+                if not item:
+                    continue
+                qid = _qid(item)
+                if qid in entities:
+                    continue
+                en_name = _val(row, "itemLabel")
                 ru_name = _val(row, "ruLabel")
                 name = en_name or ru_name
                 if not name or name.startswith("Q"):
                     continue
                 if name.lower() in existing_names:
                     continue
+                entities[qid] = {"en_name": en_name, "ru_name": ru_name, "name": name}
+
+            if not entities:
+                logger.info("  No new entities at offset %d", offset)
+                time.sleep(1)
+                continue
+
+            qids = list(entities.keys())
+
+            # Step 2: Fetch properties in separate lightweight queries
+            time.sleep(1)
+            genders = _fetch_single_property(QUERY_GENDER, qids, "genderLabel")
+            birth_deaths = _fetch_birth_death(qids)
+            countries = _fetch_single_property(QUERY_COUNTRY, qids, "countryLabel")
+            occupations = _fetch_property(QUERY_OCCUPATIONS, qids, "occupationLabel")
+
+            # Step 3: Process and insert into DB
+            new_in_batch = 0
+            for qid, info in entities.items():
+                if count >= limit:
+                    break
+
+                name = info["name"]
+                en_name = info["en_name"]
+                ru_name = info["ru_name"]
 
                 attrs: dict[str, float] = {
                     "is_fictional": 0.0, "is_human": 1.0, "is_adult": 1.0,
                 }
 
                 # Gender
-                gender = _val(row, "genderLabel")
+                gender = genders.get(qid)
                 if gender:
                     attrs["is_male"] = 1.0 if "male" in gender.lower() and "female" not in gender.lower() else 0.0
 
                 # Country
-                attrs.update(_country_attrs(_val(row, "countryLabel")))
+                attrs.update(_country_attrs(countries.get(qid)))
+
                 # Era
-                attrs.update(_era_attrs(_int_val(row, "birthYear"), _int_val(row, "deathYear")))
+                bd = birth_deaths.get(qid, (None, None))
+                attrs.update(_era_attrs(bd[0], bd[1]))
+
                 # Occupations
-                attrs.update(_occupation_attrs(_val(row, "occupations")))
+                occ_list = occupations.get(qid, [])
+                attrs.update(_occupation_attrs("|".join(occ_list)))
 
                 lang = "ru" if (_is_cyrillic(name)) else "en"
                 eid = await repo.add_entity(name, "wikidata", "person", lang)
 
-                # Add Russian alias if both names exist and differ
+                # Add alias in the other language if both names exist and differ
                 if en_name and ru_name and en_name != ru_name:
                     if name == en_name:
                         await repo.add_alias(eid, ru_name, "ru")
@@ -473,9 +663,6 @@ async def import_people(repo: Repository, attr_ids: dict[str, int],
 
             logger.info("  offset=%d: +%d new (total: %d)", offset, new_in_batch, count)
 
-            # Be polite to Wikidata servers
-            time.sleep(1)
-
     logger.info("Imported %d real people", count)
     return count
 
@@ -488,9 +675,9 @@ async def import_fictional(repo: Repository, attr_ids: dict[str, int],
     logger.info("=" * 60)
 
     count = 0
-    batch = 100  # Reduced from 2000 to avoid timeouts
+    batch = BATCH_SIZE
     thresholds = [(30, min(limit, 10000)), (15, min(limit, 25000)),
-                  (5, limit)]
+                  (5, min(limit, 40000)), (3, limit)]
 
     for min_sl, phase_limit in thresholds:
         if count >= limit:
@@ -501,31 +688,76 @@ async def import_fictional(repo: Repository, attr_ids: dict[str, int],
             if count >= limit:
                 break
 
-            query = QUERY_FICTIONAL.format(min_sitelinks=min_sl, limit=batch, offset=offset)
+            # Step 1: Fetch IDs and labels (lightweight)
+            query = QUERY_FICTIONAL_IDS.format(min_sitelinks=min_sl, limit=batch, offset=offset)
             rows = _sparql_query(query)
             if not rows:
                 logger.info("  No more results at offset %d", offset)
                 break
 
-            new_in_batch = 0
+            # Parse entities, deduplicate by QID
+            entities: dict[str, dict] = {}
             for row in rows:
-                en_name = _val(row, "enLabel")
+                item = _val(row, "item")
+                if not item:
+                    continue
+                qid = _qid(item)
+                if qid in entities:
+                    continue
+                en_name = _val(row, "itemLabel")
                 ru_name = _val(row, "ruLabel")
                 name = en_name or ru_name
                 if not name or name.startswith("Q"):
                     continue
                 if name.lower() in existing_names:
                     continue
+                entities[qid] = {"en_name": en_name, "ru_name": ru_name, "name": name}
+
+            if not entities:
+                logger.info("  No new entities at offset %d", offset)
+                time.sleep(1)
+                continue
+
+            qids = list(entities.keys())
+
+            # Step 2: Fetch properties in separate lightweight queries
+            time.sleep(1)
+            genders = _fetch_single_property(QUERY_GENDER, qids, "genderLabel")
+            universes = _fetch_property(QUERY_UNIVERSE, qids, "universeLabel")
+            medias = _fetch_property(QUERY_MEDIA, qids, "mediaLabel")
+            occupations = _fetch_property(QUERY_OCCUPATIONS, qids, "occupationLabel")
+
+            # Step 3: Process and insert into DB
+            new_in_batch = 0
+            for qid, info in entities.items():
+                if count >= limit:
+                    break
+
+                name = info["name"]
+                en_name = info["en_name"]
+                ru_name = info["ru_name"]
 
                 attrs: dict[str, float] = {
-                    "is_fictional": 1.0, "is_adult": 1.0,
+                    "is_fictional": 1.0, "is_adult": 1.0, "is_human": 0.8,
                 }
 
-                gender = _val(row, "genderLabel")
+                # Gender
+                gender = genders.get(qid)
                 if gender:
                     attrs["is_male"] = 1.0 if "male" in gender.lower() and "female" not in gender.lower() else 0.0
 
-                attrs.update(_universe_attrs(_val(row, "universes"), _val(row, "medias")))
+                # Universe / Media
+                uni_list = universes.get(qid, [])
+                med_list = medias.get(qid, [])
+                attrs.update(_universe_attrs("|".join(uni_list), "|".join(med_list)))
+
+                # Occupations (villain, hero, robot, etc.)
+                occ_list = occupations.get(qid, [])
+                for occ in occ_list:
+                    occ_lower = occ.strip().lower()
+                    for key, vals in FICTIONAL_OCCUPATION_ATTRS.items():
+                        if key in occ_lower:
+                            attrs.update(vals)
 
                 lang = "ru" if _is_cyrillic(name) else "en"
                 eid = await repo.add_entity(name, "wikidata", "character", lang)
@@ -545,7 +777,6 @@ async def import_fictional(repo: Repository, attr_ids: dict[str, int],
                 new_in_batch += 1
 
             logger.info("  offset=%d: +%d new (total: %d)", offset, new_in_batch, count)
-            time.sleep(1)
 
     logger.info("Imported %d fictional characters", count)
     return count

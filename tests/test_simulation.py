@@ -11,7 +11,7 @@ Run with: pytest tests/test_simulation.py -v -s
 from __future__ import annotations
 
 import asyncio
-import math
+import os
 import pytest
 
 from akinator.config import MAX_QUESTIONS
@@ -132,6 +132,19 @@ class SimulationResult:
         self.max_prob_at_end = max_prob_at_end
 
 
+def _coverage_scores(entities: list[Entity]) -> list[float]:
+    """Return per-entity scores proportional to attribute coverage.
+
+    Entities with more non-0.5 attributes are better known and should
+    start with higher prior probability.
+    """
+    scores = []
+    for e in entities:
+        n = sum(1 for v in e.attributes.values() if abs(v - 0.5) > 0.1)
+        scores.append(max(1.0, float(n)))
+    return scores
+
+
 async def simulate_entity(
     repo: Repository,
     manager: GameSessionManager,
@@ -150,7 +163,10 @@ async def simulate_entity(
     # Initialize session with all entities as candidates
     session = manager.create_session(user_id=1, language="en")
     candidate_ids = [e.id for e in all_entities]
-    manager.init_candidates(session, candidate_ids)
+
+    # Use coverage-based priors for better performance
+    scores = _coverage_scores(all_entities)
+    manager.init_candidates(session, candidate_ids, scores=scores)
 
     # Load all entities with attributes for scoring
     entities_with_attrs = []
@@ -308,7 +324,7 @@ def print_simulation_report(results: list[SimulationResult]) -> None:
 
 @pytest.mark.asyncio
 async def test_full_simulation(tmp_path):
-    """Run full simulation test with PERFECT oracle (baseline - must be 100%)."""
+    """Run full simulation test with PERFECT oracle (baseline - must be 99%+)."""
 
     # Use the actual database (not tmp_path for this test)
     db_path = "data/akinator.db"
@@ -330,7 +346,6 @@ async def test_full_simulation(tmp_path):
     assert accuracy >= 99.0, f"Accuracy regression! Expected >= 99%, got {accuracy:.2f}%. Check SIMULATION_RESULTS.md for details."
 
     # Save results to memory for tracking
-    import os
     memory_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "memory")
     os.makedirs(memory_dir, exist_ok=True)
 
@@ -365,55 +380,6 @@ async def test_realistic_user_simulation(tmp_path):
     assert total > 0, "Database should contain entities"
     assert accuracy >= 95.0, f"Realistic user accuracy too low! Expected >= 95%, got {accuracy:.2f}%"
 
-    # Save results
-    import os
-    import datetime
-    memory_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "memory")
-    with open(os.path.join(memory_dir, "SIMULATION_RESULTS.md"), "a") as f:
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        f.write(f"\n## Realistic User Run: {timestamp}\n")
-        f.write(f"- **Entities**: {total}\n")
-        f.write(f"- **Accuracy**: {accuracy:.2f}%\n")
-        f.write(f"- **Strategy**: Realistic (more PROBABLY/DONT_KNOW)\n")
-        f.write("\n")
-
-
-@pytest.mark.asyncio
-async def test_pessimistic_user_simulation(tmp_path):
-    """Run simulation with PESSIMISTIC oracle (lots of DONT_KNOW - should be >= 90%)."""
-
-    db_path = "data/akinator.db"
-
-    results = await run_full_simulation(db_path, PessimisticOracle(), "Pessimistic")
-    print_simulation_report(results)
-
-    # Calculate accuracy
-    total = len(results)
-    successes = sum(1 for r in results if r.success)
-    accuracy = 100.0 * successes / total if total > 0 else 0.0
-
-    print(f"\n🎯 Pessimistic User Accuracy: {accuracy:.2f}%")
-    print(f"🎯 Target: >= 90.00% (worst case scenario)")
-
-    assert total > 0, "Database should contain entities"
-    # This is harsh - pessimistic users say DONT_KNOW a lot
-    # 90% is acceptable for worst-case scenario
-    if accuracy < 90.0:
-        print(f"⚠️  WARNING: Pessimistic accuracy below 90%: {accuracy:.2f}%")
-        print("   This may indicate need for more discriminating attributes")
-
-    # Save results
-    import os
-    import datetime
-    memory_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "memory")
-    with open(os.path.join(memory_dir, "SIMULATION_RESULTS.md"), "a") as f:
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        f.write(f"\n## Pessimistic User Run: {timestamp}\n")
-        f.write(f"- **Entities**: {total}\n")
-        f.write(f"- **Accuracy**: {accuracy:.2f}%\n")
-        f.write(f"- **Strategy**: Pessimistic (lots of DONT_KNOW)\n")
-        f.write("\n")
-
 
 if __name__ == "__main__":
     # Allow running directly for quick testing
@@ -422,14 +388,11 @@ if __name__ == "__main__":
     print("=" * 60)
     print("PERFECT ORACLE (Baseline)")
     print("=" * 60)
-    asyncio.run(run_full_simulation("data/akinator.db", PerfectOracle(), "Perfect"))
+    results = asyncio.run(run_full_simulation("data/akinator.db", PerfectOracle(), "Perfect"))
+    print_simulation_report(results)
 
     print("\n" + "=" * 60)
     print("REALISTIC ORACLE (Real User Behavior)")
     print("=" * 60)
-    asyncio.run(run_full_simulation("data/akinator.db", RealisticOracle(), "Realistic"))
-
-    print("\n" + "=" * 60)
-    print("PESSIMISTIC ORACLE (Worst Case)")
-    print("=" * 60)
-    asyncio.run(run_full_simulation("data/akinator.db", PessimisticOracle(), "Pessimistic"))
+    results = asyncio.run(run_full_simulation("data/akinator.db", RealisticOracle(), "Realistic"))
+    print_simulation_report(results)

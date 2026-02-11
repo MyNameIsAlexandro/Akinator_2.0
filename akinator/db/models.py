@@ -12,6 +12,7 @@ class GameMode(Enum):
     ASKING = "asking"
     GUESSING = "guessing"
     LEARNING = "learning"
+    LEARNING_CONFIRM = "learning_confirm"
     FINISHED = "finished"
 
 
@@ -68,3 +69,4 @@ class GameSession:
     guess_count: int = 0
     question_count: int = 0
     created_at: datetime = field(default_factory=datetime.now)
+    pending_entity: dict | None = None

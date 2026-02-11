@@ -16,3 +16,71 @@ ANSWER_WEIGHTS = {
     "probably_no": 0.25,
     "dont_know": 0.5,
 }
+
+# All 31 attribute keys used for entity classification
+ATTRIBUTE_KEYS = [
+    "is_fictional", "is_male", "is_human", "is_alive", "is_adult", "is_villain",
+    "from_movie", "from_tv_series", "from_anime", "from_game", "from_book",
+    "from_comics", "from_music", "from_sport", "from_politics", "from_science",
+    "from_history", "from_usa", "from_europe", "from_russia", "from_asia",
+    "from_japan", "era_ancient", "era_medieval", "era_modern", "era_20th_century",
+    "era_21st_century", "has_superpower", "wears_uniform", "has_famous_catchphrase",
+    "is_leader", "is_wealthy",
+]
+
+# Mutually exclusive attribute groups.
+# When user confirms one attribute (yes/probably_yes), skip the rest in the group.
+EXCLUSIVE_GROUPS: list[list[str]] = [
+    ["era_ancient", "era_medieval", "era_modern", "era_20th_century", "era_21st_century"],
+    ["from_usa", "from_europe", "from_russia", "from_asia", "from_japan"],
+]
+
+# Conditional exclusions: when an attribute is confirmed ("yes") or denied ("no"),
+# skip asking certain other attributes that become logically irrelevant.
+CONDITIONAL_EXCLUSIONS: dict[tuple[str, str], list[str]] = {
+    # Real person (is_fictional denied) → skip anime/comics/game/superpower
+    ("is_fictional", "no"): [
+        "from_anime", "from_comics", "from_game", "has_superpower",
+    ],
+    # Fictional character (is_fictional confirmed) → skip politics/science/sport
+    ("is_fictional", "yes"): [
+        "from_politics", "from_science", "from_sport",
+    ],
+    # Politician → skip anime/comics/game/superpower
+    ("from_politics", "yes"): [
+        "from_anime", "from_comics", "from_game", "has_superpower",
+    ],
+    # Musician → skip anime/comics/game/sport/politics
+    ("from_music", "yes"): [
+        "from_anime", "from_comics", "from_game", "from_sport", "from_politics",
+    ],
+    # Sportsperson → skip anime/comics/game
+    ("from_sport", "yes"): [
+        "from_anime", "from_comics", "from_game",
+    ],
+    # Anime character → skip politics/science/sport
+    ("from_anime", "yes"): [
+        "from_politics", "from_science", "from_sport",
+    ],
+    # Comics character → skip politics/science/sport
+    ("from_comics", "yes"): [
+        "from_politics", "from_science", "from_sport",
+    ],
+    # Game character → skip politics/science/sport
+    ("from_game", "yes"): [
+        "from_politics", "from_science", "from_sport",
+    ],
+    # Scientist → skip anime/comics/game/superpower
+    ("from_science", "yes"): [
+        "from_anime", "from_comics", "from_game", "has_superpower",
+    ],
+}
+
+# LLM attribute merge weights
+LLM_QA_WEIGHT = 0.3
+LLM_KNOWLEDGE_WEIGHT = 0.7
+
+# GitHub auto-backup settings
+BACKUP_INTERVAL_HOURS = 6.0
+BACKUP_MIN_NEW_ENTITIES = 5
+GITHUB_REPO = "MyNameIsAlexandro/Akinator_2.0"
